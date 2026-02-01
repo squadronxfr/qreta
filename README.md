@@ -1,2 +1,3 @@
-# qreta
-imple SaaS for artisans &amp; merchants to publish product catalogs online, shareable via unique URL or QR code.
+# Qreta:
+Simple SaaS for artisans & merchants to publish product catalogs online, shareable via unique URL or QR code.
+
