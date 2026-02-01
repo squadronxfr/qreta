@@ -1,0 +1,13 @@
+{
+  "name": "qreta-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=apps/qreta-web",
+    "dev:landing": "npm run dev --workspace=apps/landing"
+  }
+}
