@@ -1,6 +1,165 @@
 import {buildCollection, buildProperty} from "@firecms/core"
 
-export const storeCollection = buildCollection({
+// Sous-collection: Categories
+const categoriesCollection = buildCollection({
+    id: "categories",
+    path: "categories",
+    name: "Categories",
+    singularName: "Category",
+    icon: "Category",
+    permissions: () => ({
+        read: true,
+        edit: true,
+        create: true,
+        delete: true
+    }),
+    properties: {
+        name: buildProperty({
+            dataType: "string",
+            name: "Name",
+            validation: {required: true}
+        }),
+        order: buildProperty({
+            dataType: "number",
+            name: "Display Order",
+            description: "Order in which categories are displayed",
+            defaultValue: 0
+        }),
+        isActive: buildProperty({
+            dataType: "boolean",
+            name: "Active",
+            defaultValue: true
+        })
+    }
+})
+
+// Sous-collection: Services
+const servicesCollection = buildCollection({
+    id: "services",
+    path: "services",
+    name: "Services",
+    singularName: "Service",
+    icon: "MiscellaneousServices",
+    permissions: () => ({
+        read: true,
+        edit: true,
+        create: true,
+        delete: true
+    }),
+    properties: {
+        name: buildProperty({
+            dataType: "string",
+            name: "Name",
+            validation: {required: true}
+        }),
+        description: buildProperty({
+            dataType: "string",
+            name: "Description",
+            multiline: true
+        }),
+        price: buildProperty({
+            dataType: "number",
+            name: "Price (€)",
+            validation: {required: true, min: 0}
+        }),
+        duration: buildProperty({
+            dataType: "number",
+            name: "Duration (minutes)",
+            validation: {min: 0}
+        }),
+        imageUrl: buildProperty({
+            dataType: "string",
+            name: "Image",
+            storage: {
+                storagePath: "services/images",
+                acceptedFiles: ["image/*"],
+                maxSize: 5242880,
+                storeUrl: true
+            }
+        }),
+        categoryId: buildProperty({
+            dataType: "string",
+            name: "Category ID",
+            description: "Reference to category"
+        }),
+        isActive: buildProperty({
+            dataType: "boolean",
+            name: "Active",
+            defaultValue: true
+        }),
+        order: buildProperty({
+            dataType: "number",
+            name: "Display Order",
+            defaultValue: 0
+        })
+    }
+})
+
+// Sous-collection: Products
+const productsCollection = buildCollection({
+    id: "products",
+    path: "products",
+    name: "Products",
+    singularName: "Product",
+    icon: "Inventory",
+    permissions: () => ({
+        read: true,
+        edit: true,
+        create: true,
+        delete: true
+    }),
+    properties: {
+        name: buildProperty({
+            dataType: "string",
+            name: "Name",
+            validation: {required: true}
+        }),
+        description: buildProperty({
+            dataType: "string",
+            name: "Description",
+            multiline: true
+        }),
+        price: buildProperty({
+            dataType: "number",
+            name: "Price (€)",
+            validation: {required: true, min: 0}
+        }),
+        imageUrl: buildProperty({
+            dataType: "string",
+            name: "Image",
+            storage: {
+                storagePath: "products/images",
+                acceptedFiles: ["image/*"],
+                maxSize: 5242880,
+                storeUrl: true
+            }
+        }),
+        categoryId: buildProperty({
+            dataType: "string",
+            name: "Category ID",
+            description: "Reference to category"
+        }),
+        stock: buildProperty({
+            dataType: "number",
+            name: "Stock",
+            validation: {min: 0},
+            defaultValue: 0
+        }),
+        isActive: buildProperty({
+            dataType: "boolean",
+            name: "Active",
+            defaultValue: true
+        }),
+        order: buildProperty({
+            dataType: "number",
+            name: "Display Order",
+            defaultValue: 0
+        })
+    }
+})
+
+// Collection principale: Stores avec sous-collections
+export const storesCollection = buildCollection({
     id: "stores",
     path: "stores",
     name: "Stores",
@@ -13,7 +172,7 @@ export const storeCollection = buildCollection({
         delete: true
     }),
     properties: {
-        shopName: buildProperty({
+        storeName: buildProperty({
             dataType: "string",
             name: "Store Name",
             validation: {required: true}
@@ -49,7 +208,8 @@ export const storeCollection = buildCollection({
             storage: {
                 storagePath: "stores/logos",
                 acceptedFiles: ["image/*"],
-                maxSize: 5242880
+                maxSize: 5242880,
+                storeUrl: true
             }
         }),
         isActive: buildProperty({
@@ -92,5 +252,10 @@ export const storeCollection = buildCollection({
             name: "Created At",
             autoValue: "on_create"
         })
-    }
+    },
+    subcollections: [
+        categoriesCollection,
+        servicesCollection,
+        productsCollection
+    ]
 })

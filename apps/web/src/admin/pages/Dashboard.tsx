@@ -17,7 +17,7 @@ import {
     useFirebaseAuthController,
     FirebaseLoginView
 } from "@firecms/firebase"
-import {storeCollection} from "../firecms.config"
+import {storesCollection} from "../firecms.config"
 
 export default function Dashboard() {
     const firebaseConfig = {
@@ -41,7 +41,7 @@ export default function Dashboard() {
     })
 
     const navigationController = useBuildNavigationController({
-        collections: [storeCollection],
+        collections: [storesCollection],
         authController,
         dataSourceDelegate: firestoreDelegate,
         basePath: "/admin/dashboard"
