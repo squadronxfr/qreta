@@ -19,7 +19,7 @@ export default function Login() {
       await signInWithEmailAndPassword(auth, email, password)
       navigate('/admin/dashboard')
     } catch (err: any) {
-      setError('Email ou mot de passe incorrect')
+      setError('Invalid email or password')
       console.error(err)
     } finally {
       setLoading(false)
@@ -41,7 +41,7 @@ export default function Login() {
               </label>
               <input
                 type="email"
-                placeholder="email@exemple.com"
+                placeholder="email@example.com"
                 className="input input-bordered"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -51,7 +51,7 @@ export default function Login() {
 
             <div className="form-control mt-4">
               <label className="label">
-                <span className="label-text">Mot de passe</span>
+                <span className="label-text">Password</span>
               </label>
               <input
                 type="password"
@@ -75,7 +75,7 @@ export default function Login() {
                 className={`btn btn-primary ${loading ? 'loading' : ''}`}
                 disabled={loading}
               >
-                {loading ? 'Connexion...' : 'Se connecter'}
+                {loading ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
           </form>
