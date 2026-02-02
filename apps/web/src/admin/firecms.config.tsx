@@ -1,10 +1,10 @@
 import {buildCollection, buildProperty} from "@firecms/core"
 
-export const merchantsCollection = buildCollection({
-    id: "merchants",
-    path: "merchants",
-    name: "Merchants",
-    singularName: "Merchant",
+export const storeCollection = buildCollection({
+    id: "stores",
+    path: "stores",
+    name: "Stores",
+    singularName: "Store",
     icon: "Store",
     permissions: () => ({
         read: true,
@@ -15,7 +15,7 @@ export const merchantsCollection = buildCollection({
     properties: {
         shopName: buildProperty({
             dataType: "string",
-            name: "Shop Name",
+            name: "Store Name",
             validation: {required: true}
         }),
         firstName: buildProperty({
@@ -47,7 +47,7 @@ export const merchantsCollection = buildCollection({
             dataType: "string",
             name: "Logo",
             storage: {
-                storagePath: "merchants/logos",
+                storagePath: "stores/logos",
                 acceptedFiles: ["image/*"],
                 maxSize: 5242880
             }
