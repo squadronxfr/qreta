@@ -33,7 +33,7 @@ export const ProtectedRoute = ({children, requiredRole}: ProtectedRouteProps) =>
     if (loading) {
         return (
             <div className="flex h-screen items-center justify-center">
-                <p className="text-slate-500 animate-pulse">Chargement de qreta...</p>
+                <p className="text-slate-500 animate-pulse">Chargement de Qreta...</p>
             </div>
         );
     }

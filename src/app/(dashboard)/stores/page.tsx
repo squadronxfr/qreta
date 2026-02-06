@@ -17,7 +17,6 @@ export default function StoresPage() {
     useEffect(() => {
         if (!user) return;
 
-        // Real-time listener for user's stores
         const q = query(collection(db, "stores"), where("ownerId", "==", user.uid));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
