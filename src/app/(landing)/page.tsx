@@ -5,7 +5,6 @@ import {Button} from "@/components/ui/button";
 import {motion} from "framer-motion";
 import {Spotlight} from "@/components/react-bits/spotlight";
 import {
-    Zap,
     Check,
     ArrowRight,
     QrCode,
@@ -94,7 +93,7 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* --- BENTO GRID FEATURES (GENERALISTE) --- */}
+            {/* --- BENTO GRID FEATURES  --- */}
             <section id="features" className="py-32 bg-slate-50 border-y border-slate-200">
                 <div className="container mx-auto px-6">
                     <div className="text-center max-w-3xl mx-auto mb-20">
@@ -102,7 +101,7 @@ export default function LandingPage() {
                             Un outil, mille métiers.
                         </h2>
                         <p className="text-lg text-slate-600">
-                            La flexibilité est notre force. Qreta est conçu pour s'adapter à la structure unique de
+                            La flexibilité est notre force. Qreta est conçu pour s&#39;adapter à la structure unique de
                             votre activité.
                         </p>
                     </div>
@@ -123,11 +122,11 @@ export default function LandingPage() {
                                     className="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6 text-indigo-600">
                                     <Layers className="h-7 w-7"/>
                                 </div>
-                                <h3 className="font-heading text-2xl font-bold mb-4">L'Hybride Parfait : Services &
+                                <h3 className="font-heading text-2xl font-bold mb-4">L&#39;Hybride Parfait : Services &
                                     Produits</h3>
                                 <p className="text-slate-600 text-lg leading-relaxed max-w-xl">
                                     Ne choisissez plus. Un plombier peut afficher ses <strong>forfaits
-                                    d'intervention</strong> ET son catalogue de <strong>robinetterie</strong>.
+                                    d&#39;intervention</strong> ET son catalogue de <strong>robinetterie</strong>.
                                     Un coiffeur présente ses <strong>coupes</strong> ET ses <strong>shampoings</strong>.
                                     Tout est au même endroit.
                                 </p>
@@ -147,7 +146,8 @@ export default function LandingPage() {
                             </div>
                             <h3 className="font-heading text-2xl font-bold mb-4">Votre carte de visite 2.0</h3>
                             <p className="text-slate-300 leading-relaxed">
-                                Plus efficace qu'un site web complexe, plus complet qu'une carte de visite. Votre lien
+                                Plus efficace qu&#39;un site web complexe, plus complet qu&#39;une carte de visite.
+                                Votre lien
                                 qreta est votre nouveau portfolio.
                             </p>
                         </motion.div>
@@ -182,8 +182,8 @@ export default function LandingPage() {
                                     <h3 className="font-heading text-2xl font-bold mb-4">Fait pour ceux qui font.</h3>
                                     <p className="text-slate-600 text-lg leading-relaxed">
                                         Vous êtes expert dans votre métier, pas en informatique.
-                                        Nous avons créé l'interface la plus simple du marché. Ajoutez une photo, un
-                                        prix, un titre. C'est en ligne.
+                                        Nous avons créé l&#39;interface la plus simple du marché. Ajoutez une photo, un
+                                        prix, un titre. C&#39;est en ligne.
                                     </p>
                                 </div>
                             </div>
@@ -370,7 +370,7 @@ export default function LandingPage() {
                             <CardFooter>
                                 <Button variant="outline"
                                         className="w-full h-12 rounded-xl font-semibold border-slate-200">
-                                    Contacter l'équipe
+                                    Contacter l&#39;équipe
                                 </Button>
                             </CardFooter>
                         </Card>
@@ -401,7 +401,7 @@ export default function LandingPage() {
                         </Button>
                     </div>
                     <p className="mt-8 text-sm text-slate-600 font-medium uppercase tracking-widest">
-                        30 secondes d'installation • Annulable à tout moment
+                        30 secondes d&#39;installation • Annulable à tout moment
                     </p>
                 </div>
             </section>

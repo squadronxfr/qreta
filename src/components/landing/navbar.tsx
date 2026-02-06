@@ -25,7 +25,6 @@ export function Navbar() {
         <nav
             className={`fixed top-0 w-full z-50 transition-all duration-300 border-b border-transparent ${isScrolled ? "bg-white/90 backdrop-blur-xl border-slate-200 py-3 shadow-sm" : "bg-transparent py-5"}`}>
             <div className="container mx-auto px-6 flex justify-between items-center">
-                {/* LOGO TYPOGRAPHIQUE SIMPLE */}
                 <Link href="/" className="z-50">
           <span className="font-heading text-3xl font-bold tracking-tight text-slate-900">
             Qreta<span className="text-indigo-600">.</span>
