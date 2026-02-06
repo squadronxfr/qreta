@@ -13,9 +13,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import {Avatar, AvatarFallback} from "@/components/ui/avatar";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Button} from "@/components/ui/button";
-import {LogOut, User, Settings, LayoutDashboard} from "lucide-react";
+import {LogOut, User, LayoutDashboard, CreditCard, ShieldCheck} from "lucide-react";
 
 export function DashboardHeader() {
     const {user, userData} = useAuth();
@@ -24,6 +24,13 @@ export function DashboardHeader() {
     const handleLogout = async () => {
         await signOut(auth);
         router.push("/login");
+    };
+
+    const getInitials = () => {
+        if (userData?.firstname && userData?.lastname) {
+            return (userData.firstname[0] + userData.lastname[0]).toUpperCase();
+        }
+        return user?.email?.substring(0, 2).toUpperCase() || "U";
     };
 
     return (
@@ -41,18 +48,27 @@ export function DashboardHeader() {
                             <LayoutDashboard className="h-4 w-4"/>
                             Tableau de bord
                         </Link>
+
+                        {userData?.role === 'superadmin' && (
+                            <Link href="/admin"
+                                  className="text-sm font-bold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-full hover:bg-purple-100 transition-colors flex items-center gap-2 cursor-pointer border border-purple-200">
+                                <ShieldCheck className="h-4 w-4"/>
+                                Administration
+                            </Link>
+                        )}
                     </nav>
                 </div>
 
                 <div className="flex items-center gap-4">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            {/* Ajout de cursor-pointer ici sur le bouton de l'avatar */}
                             <Button variant="ghost"
                                     className="relative h-10 w-10 rounded-full border border-slate-200 p-0 overflow-hidden cursor-pointer shadow-sm hover:bg-slate-50 transition-colors">
                                 <Avatar className="h-10 w-10 rounded-full cursor-pointer">
+                                    <AvatarImage src={userData?.photoUrl || user?.photoURL || ""}
+                                                 className="object-cover"/>
                                     <AvatarFallback className="bg-indigo-50 text-indigo-600 font-bold cursor-pointer">
-                                        {user?.email?.charAt(0).toUpperCase()}
+                                        {getInitials()}
                                     </AvatarFallback>
                                 </Avatar>
                             </Button>
@@ -62,25 +78,33 @@ export function DashboardHeader() {
                                              align="end">
                             <DropdownMenuLabel className="font-normal px-2 py-2">
                                 <div className="flex flex-col space-y-1">
-                                    <p className="text-sm font-bold leading-none text-slate-900">
-                                        {userData?.role === 'superadmin' ? 'Administrateur' : 'Commerçant'}
+                                    <p className="text-sm font-bold leading-none text-slate-900 capitalize">
+                                        {userData?.firstname} {userData?.lastname}
                                     </p>
                                     <p className="text-xs leading-none text-slate-500">{user?.email}</p>
                                 </div>
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator/>
 
-                            <DropdownMenuItem
-                                className="cursor-pointer flex items-center gap-2 px-3 py-2.5 rounded-lg text-slate-600 focus:bg-indigo-50 focus:text-indigo-600 transition-colors">
-                                <User className="h-4 w-4"/>
-                                <span className="font-medium">Mon Profil</span>
+                            <DropdownMenuItem asChild>
+                                <Link href="/account" className="cursor-pointer flex items-center w-full">
+                                    <User className="mr-2 h-4 w-4"/>
+                                    Mon Profil
+                                </Link>
                             </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                                className="cursor-pointer flex items-center gap-2 px-3 py-2.5 rounded-lg text-slate-600 focus:bg-indigo-50 focus:text-indigo-600 transition-colors">
-                                <Settings className="h-4 w-4"/>
-                                <span className="font-medium">Paramètres</span>
+                            <DropdownMenuItem asChild>
+                                <Link href="/billing" className="cursor-pointer flex items-center w-full">
+                                    <CreditCard className="mr-2 h-4 w-4"/>
+                                    Facturation
+                                </Link>
                             </DropdownMenuItem>
+
+                            {/* Optionnel : Paramètres globaux */}
+                            {/* <DropdownMenuItem className="cursor-pointer flex items-center w-full">
+                                <Settings className="mr-2 h-4 w-4"/>
+                                Paramètres
+                            </DropdownMenuItem> */}
 
                             <DropdownMenuSeparator/>
 

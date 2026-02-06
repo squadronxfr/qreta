@@ -2,7 +2,7 @@ import {Timestamp} from "firebase/firestore";
 
 export interface Store {
     id: string;
-    ownerId: string;
+    userId: string;
     name: string;
     slug: string;
     description?: string;

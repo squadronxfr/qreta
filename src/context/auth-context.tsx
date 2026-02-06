@@ -1,58 +1,85 @@
 "use client";
 
 import {createContext, useContext, useEffect, useState, ReactNode} from "react";
-import {onAuthStateChanged, User} from "firebase/auth";
+import {
+    onAuthStateChanged,
+    signOut,
+    GoogleAuthProvider,
+    signInWithPopup,
+    User
+} from "firebase/auth";
+import {doc, onSnapshot} from "firebase/firestore";
 import {auth, db} from "@/lib/firebase/config";
-import {doc, getDoc, Timestamp} from "firebase/firestore";
-
-export interface UserDoc {
-    email: string;
-    role: "superadmin" | "store_owner";
-    createdAt: Timestamp;
-}
+import {UserDoc} from "@/types/user"; // Import de ton type personnalisé
 
 interface AuthContextType {
     user: User | null;
-    loading: boolean;
     userData: UserDoc | null;
+    loading: boolean;
+    googleSignIn: () => Promise<void>;
+    logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
-    user: null,
-    loading: true,
-    userData: null,
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({children}: { children: ReactNode }) => {
+export function AuthProvider({children}: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [userData, setUserData] = useState<UserDoc | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const googleSignIn = async () => {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+    };
+
+    const logout = async () => {
+        await signOut(auth);
+        setUserData(null);
+    };
+
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            if (firebaseUser) {
-                setUser(firebaseUser);
-                const userDocRef = doc(db, "users", firebaseUser.uid);
-                const userDocSnap = await getDoc(userDocRef);
-
-                if (userDocSnap.exists()) {
-                    setUserData(userDocSnap.data() as UserDoc);
-                }
-            } else {
-                setUser(null);
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            if (!currentUser) {
                 setUserData(null);
+                setLoading(false);
             }
-            setLoading(false);
         });
-
         return () => unsubscribe();
     }, []);
 
+    useEffect(() => {
+        if (!user) return;
+
+        setLoading(true);
+        const userRef = doc(db, "users", user.uid);
+
+        const unsubscribeFirestore = onSnapshot(userRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setUserData(docSnap.data() as UserDoc);
+            } else {
+                setUserData(null);
+            }
+            setLoading(false);
+        }, (error) => {
+            console.error("Erreur récupération profil:", error);
+            setLoading(false);
+        });
+
+        return () => unsubscribeFirestore();
+    }, [user]);
+
     return (
-        <AuthContext.Provider value={{user, loading, userData}}>
+        <AuthContext.Provider value={{user, userData, loading, googleSignIn, logout}}>
             {children}
         </AuthContext.Provider>
     );
-};
+}
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+    return context;
+}
