@@ -1,8 +1,9 @@
 "use client";
 
 import {useState, SyntheticEvent, ChangeEvent, useRef, useEffect} from "react";
+import {useRouter} from "next/navigation";
 import {db, storage} from "@/lib/firebase/config";
-import {doc, updateDoc, collection, query, where, getDocs} from "firebase/firestore";
+import {doc, updateDoc, deleteDoc, collection, query, where, getDocs} from "firebase/firestore";
 import {ref, uploadBytes, getDownloadURL, deleteObject} from "firebase/storage";
 import {Store} from "@/types/store";
 import {Button} from "@/components/ui/button";
@@ -15,15 +16,27 @@ import {Separator} from "@/components/ui/separator";
 import {
     Loader2, Save, Upload, Image as ImageIcon, Download,
     QrCode, Check, Copy, X, ExternalLink, MapPin,
-    Phone, Instagram, Globe, Link as LinkIcon, AlertTriangle
+    Phone, Instagram, Globe, Link as LinkIcon, AlertTriangle, Trash2
 } from "lucide-react";
 import QRCode from "react-qr-code";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface StoreSettingsFormProps {
     store: Store;
 }
 
 export function StoreSettingsForm({store}: StoreSettingsFormProps) {
+    const router = useRouter();
     const [loading, setLoading] = useState<boolean>(false);
     const [success, setSuccess] = useState<boolean>(false);
     const [domain, setDomain] = useState<string>("");
@@ -207,6 +220,21 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
         img.src = "data:image/svg+xml;base64," + btoa(svgData);
     };
 
+    const handleDeleteStore = async () => {
+        setLoading(true);
+        try {
+            if (store.logoUrl) await deleteObject(ref(storage, store.logoUrl)).catch(() => null);
+            if (store.bannerUrl) await deleteObject(ref(storage, store.bannerUrl)).catch(() => null);
+
+            await deleteDoc(doc(db, "stores", store.id));
+            router.push("/stores");
+            router.refresh();
+        } catch (error) {
+            console.error("Error deleting store:", error);
+            setLoading(false);
+        }
+    };
+
     const handleSubmit = async (e: SyntheticEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -280,8 +308,10 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
         <div className="max-w-6xl mx-auto space-y-6">
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
+                {/* --- BLOC 1 : FORMULAIRES PRINCIPAUX (Reste à gauche sur Desktop, Premier sur Mobile) --- */}
                 <div className="lg:col-span-8 space-y-8">
                     <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+                        {/* ... Contenu Identité & Visibilité (inchangé) ... */}
                         <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -308,7 +338,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                         <CardContent className="space-y-6 pt-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <Label htmlFor="name">Nom de l'établissement</Label>
+                                    <Label htmlFor="name">Nom de l&#39;établissement</Label>
                                     <Input
                                         id="name"
                                         value={formData.name}
@@ -323,7 +353,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                                         <div
                                             className="flex items-center gap-1 text-[10px] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
                                             <AlertTriangle className="h-3 w-3"/>
-                                            Modifier l'URL invalide vos anciens QR Codes
+                                            Modifier l&#39;URL invalide vos anciens QR Codes
                                         </div>
                                     </Label>
                                     <div className="flex items-center">
@@ -346,7 +376,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                                     id="description"
                                     value={formData.description}
                                     onChange={handleInputChange}
-                                    className="rounded-xl min-h-[100px] resize-none"
+                                    className="rounded-xl min-h-25 resize-none"
                                     placeholder="Dites-en plus sur votre activité..."
                                 />
                             </div>
@@ -354,9 +384,10 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                     </Card>
 
                     <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+                        {/* ... Contenu Visuel & Branding (inchangé) ... */}
                         <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
                             <CardTitle className="text-lg font-heading">Visuel & Branding</CardTitle>
-                            <CardDescription>Personnalisez l'apparence de votre catalogue.</CardDescription>
+                            <CardDescription>Personnalisez l&#39;apparence de votre catalogue.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-8 pt-6">
                             <div className="grid grid-cols-1 gap-8">
@@ -424,6 +455,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                     </Card>
 
                     <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+                        {/* ... Contenu Coordonnées (inchangé) ... */}
                         <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
                             <CardTitle className="text-lg font-heading">Coordonnées</CardTitle>
                             <CardDescription>Aidez vos clients à vous contacter.</CardDescription>
@@ -458,7 +490,8 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                         </CardContent>
                     </Card>
 
-                    <div className="flex justify-end pt-4 pb-10">
+                    {/* Bouton Sauvegarder (Reste avec le formulaire principal) */}
+                    <div className="flex justify-end pt-4">
                         <Button
                             type="submit"
                             disabled={loading || success}
@@ -479,8 +512,10 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                     </div>
                 </div>
 
+                {/* --- BLOC 2 : SIDEBAR (Reste à droite sur Desktop, 2ème sur Mobile) --- */}
                 <div className="lg:col-span-4 space-y-6">
                     <Card className="border-indigo-100 bg-indigo-50/50 shadow-sm rounded-2xl sticky top-24">
+                        {/* ... Contenu Accès Rapide (inchangé) ... */}
                         <CardHeader className="pb-2">
                             <CardTitle className="text-lg font-heading text-indigo-950 flex items-center gap-2">
                                 <QrCode className="h-5 w-5 text-indigo-600"/> Accès Rapide
@@ -525,7 +560,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                                 <div
                                     className="flex items-center gap-2 p-1 bg-white border border-slate-200 rounded-xl shadow-sm group hover:border-indigo-300 transition-colors">
                                     <div className="flex-1 px-3 overflow-hidden flex items-center gap-1">
-                                        <LinkIcon className="h-3 w-3 text-slate-400 flex-shrink-0"/>
+                                        <LinkIcon className="h-3 w-3 text-slate-400 shrink-0"/>
                                         <p className="text-xs font-mono text-slate-600 truncate select-all">
                                             {domain}/{store.slug}
                                         </p>
@@ -544,6 +579,54 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* --- BLOC 3 : DANGER ZONE (Revient à gauche sur Desktop, Dernier sur Mobile) --- */}
+                {/* J'ai sorti ce bloc du premier div lg:col-span-8 pour le mettre ici à la fin */}
+                <div className="lg:col-span-8">
+                    <Card className="border-red-100 bg-red-50/30 shadow-sm rounded-2xl mb-10">
+                        {/* ... Contenu Danger Zone (inchangé) ... */}
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-lg font-heading text-red-700 flex items-center gap-2">
+                                <AlertTriangle className="h-5 w-5"/> Zone de danger
+                            </CardTitle>
+                            <CardDescription className="text-red-600/80">
+                                La suppression de la boutique est définitive et irréversible.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <p className="text-sm text-red-700">
+                                    Toutes les données (produits, catégories, images) seront perdues.
+                                </p>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" className="w-full sm:w-auto rounded-xl">
+                                            <Trash2 className="mr-2 h-4 w-4"/>
+                                            Supprimer la boutique
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Cette action est irréversible. Elle supprimera définitivement votre
+                                                boutique <strong>{store.name}</strong> et toutes les données associées.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleDeleteStore}
+                                                               className="bg-red-600 hover:bg-red-700 rounded-xl">
+                                                Oui, supprimer
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
             </form>
         </div>
     );
