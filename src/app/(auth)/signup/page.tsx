@@ -2,16 +2,17 @@
 
 import {useState, SyntheticEvent} from "react";
 import {createUserWithEmailAndPassword, updateProfile} from "firebase/auth";
-import {doc, setDoc} from "firebase/firestore";
+import {FirebaseError} from "firebase/app";
+import {doc, setDoc, serverTimestamp} from "firebase/firestore";
 import {auth, db} from "@/lib/firebase/config";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter} from "@/components/ui/card";
+import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Loader2, ArrowRight, CheckCircle2} from "lucide-react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
-import {Alert, AlertDescription} from "@/components/ui/alert";
 
 export default function SignupPage() {
     const [isLoading, setIsLoading] = useState(false);
@@ -63,22 +64,30 @@ export default function SignupPage() {
                 role: "store_owner",
                 photoUrl: "",
                 subscription: {
-                    plan: "starter",
-                    status: "trialing",
-                    currentPeriodEnd: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14)
+                    plan: "free",
+                    status: "active",
+                    currentPeriodEnd: null,
                 },
-                createdAt: new Date(),
-                updatedAt: new Date()
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
             });
 
             router.push("/stores");
 
-        } catch (err: any) {
-            console.error(err);
-            if (err.code === 'auth/email-already-in-use') {
-                setError("Cet email est déjà utilisé.");
+        } catch (err: unknown) {
+            if (err instanceof FirebaseError) {
+                switch (err.code) {
+                    case "auth/email-already-in-use":
+                        setError("Cet email est déjà utilisé.");
+                        break;
+                    case "auth/weak-password":
+                        setError("Le mot de passe est trop faible.");
+                        break;
+                    default:
+                        setError("Une erreur est survenue lors de l'inscription.");
+                }
             } else {
-                setError("Une erreur est survenue lors de l'inscription.");
+                setError("Une erreur inattendue est survenue.");
             }
         } finally {
             setIsLoading(false);
@@ -87,7 +96,7 @@ export default function SignupPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-            <Card className="w-full max-w-md border-slate-200 shadow-xl">
+            <Card className="w-full max-w-md border-slate-200 shadow-xl rounded-2xl">
                 <CardHeader className="space-y-1">
                     <div className="flex justify-center mb-4">
                         <h1 className="text-3xl font-bold font-heading tracking-tight text-slate-900">
@@ -101,7 +110,6 @@ export default function SignupPage() {
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSignup} className="space-y-4">
-
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="firstname">Prénom</Label>
@@ -134,18 +142,18 @@ export default function SignupPage() {
                         </div>
 
                         {error && (
-                            <Alert variant="destructive" className="bg-red-50 text-red-900 border-red-200">
+                            <Alert variant="destructive" className="bg-red-50 text-red-900 border-red-200 rounded-xl">
                                 <AlertDescription>{error}</AlertDescription>
                             </Alert>
                         )}
 
                         <Button type="submit"
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium h-11"
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium h-11 rounded-xl"
                                 disabled={isLoading}>
                             {isLoading ? (
                                 <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Création en cours...</>
                             ) : (
-                                <>S'inscrire <ArrowRight className="ml-2 h-4 w-4"/></>
+                                <>S&#39;inscrire <ArrowRight className="ml-2 h-4 w-4"/></>
                             )}
                         </Button>
                     </form>
@@ -156,22 +164,21 @@ export default function SignupPage() {
                                 <span className="w-full border-t border-slate-200"/>
                             </div>
                             <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-white px-2 text-slate-500">Avantages</span>
+                                <span className="bg-white px-2 text-slate-500">Inclus gratuitement</span>
                             </div>
                         </div>
                         <ul className="mt-4 space-y-2 text-sm text-slate-600">
-                            <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-600"/> 1
-                                Boutique gratuite à vie
+                            <li className="flex items-center gap-2">
+                                <CheckCircle2 className="h-4 w-4 text-green-600"/> 1 Boutique gratuite à vie
                             </li>
-                            <li className="flex items-center gap-2"><CheckCircle2
-                                className="h-4 w-4 text-green-600"/> Produits illimités
+                            <li className="flex items-center gap-2">
+                                <CheckCircle2 className="h-4 w-4 text-green-600"/> Produits illimités
                             </li>
-                            <li className="flex items-center gap-2"><CheckCircle2
-                                className="h-4 w-4 text-green-600"/> QR Code généré automatiquement
+                            <li className="flex items-center gap-2">
+                                <CheckCircle2 className="h-4 w-4 text-green-600"/> QR Code généré automatiquement
                             </li>
                         </ul>
                     </div>
-
                 </CardContent>
                 <CardFooter className="flex justify-center border-t border-slate-100 py-4">
                     <p className="text-sm text-slate-500">

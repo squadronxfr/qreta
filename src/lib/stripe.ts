@@ -7,23 +7,26 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 export const PLANS = {
     free: {
         name: "Gratuit",
-        priceId: "price_1Sxtlq9mcp2EBniBwfHEoKZH",
+        priceId: null,
         quota: 1
     },
     starter: {
         name: "Starter",
         priceId: "price_1Sxtea9mcp2EBniBzRXXntql",
-        quota: 1
+        quota: 3
     },
     pro: {
         name: "Pro",
         priceId: "price_1Sxtex9mcp2EBniBDOFUCQEr",
-        quota: 1
+        quota: Infinity
     }
-};
+} as const;
 
-export function getPlanFromPriceId(priceId: string) {
-    return Object.keys(PLANS).find(
-        (key) => PLANS[key as keyof typeof PLANS].priceId === priceId
-    ) as keyof typeof PLANS | null;
+export type PlanKey = keyof typeof PLANS;
+
+export function getPlanFromPriceId(priceId: string): PlanKey | null {
+    const entry = Object.entries(PLANS).find(
+        ([, plan]) => plan.priceId === priceId
+    );
+    return (entry?.[0] as PlanKey) ?? null;
 }

@@ -2,6 +2,7 @@
 
 import {useState, SyntheticEvent, useRef, ChangeEvent, useEffect} from "react";
 import {useAuth} from "@/context/auth-context";
+import {useRouter} from "next/navigation";
 import {
     updateProfile,
     updatePassword,
@@ -22,7 +23,7 @@ import {Badge} from "@/components/ui/badge";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {
     Loader2, Save, User, Lock, Check,
-    Camera, Trash2, Mail, Sparkles, AlertCircle, AlertTriangle, ArrowUpCircle
+    Camera, Trash2, Mail, Sparkles, AlertCircle, AlertTriangle, ArrowUpCircle, ExternalLink
 } from "lucide-react";
 import {
     AlertDialog,
@@ -37,10 +38,12 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export function ProfileForm() {
-    const {user, logout} = useAuth();
+    const {user, logout, userData} = useAuth();
+    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
     const [userDoc, setUserDoc] = useState<UserDoc | null>(null);
 
@@ -96,8 +99,42 @@ export function ProfileForm() {
             if (!user) return;
             await deleteUser(user);
             await logout();
-        } catch (err: unknown) {
+        } catch {
             setError("Erreur critique : Veuillez vous reconnecter avant de supprimer votre compte.");
+        }
+    };
+
+    const handlePortal = async (targetPriceId?: string | null) => {
+        if (!user) return;
+
+        // Si l'utilisateur n'a pas de client Stripe (plan free), on le redirige vers Billing
+        if (!userData?.subscription?.stripeCustomerId) {
+            router.push("/billing");
+            return;
+        }
+
+        setLoadingAction(targetPriceId ? "portal_upgrade" : "portal");
+        setError(null);
+
+        try {
+            const res = await fetch("/api/stripe/portal", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    userId: user.uid,
+                    priceId: targetPriceId,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.url) {
+                setError(data.error || "Impossible d'accéder au portail.");
+                return;
+            }
+            window.location.href = data.url;
+        } catch {
+            setError("Erreur de connexion au serveur.");
+        } finally {
+            setLoadingAction(null);
         }
     };
 
@@ -169,7 +206,7 @@ export function ProfileForm() {
                     await setDoc(userRef, {
                         uid: user.uid,
                         role: "store_owner",
-                        subscription: {plan: "starter", status: "trialing", currentPeriodEnd: new Date()},
+                        subscription: {plan: "free", status: "active", currentPeriodEnd: new Date()},
                         createdAt: new Date(),
                         ...updatePayload
                     });
@@ -263,28 +300,50 @@ export function ProfileForm() {
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-slate-500">Plan actuel</span>
                             <Badge className="bg-indigo-600 hover:bg-indigo-700 capitalize px-3">
-                                {userDoc?.subscription?.plan || "Starter"}
+                                {userData?.subscription?.plan || "Gratuit"}
                             </Badge>
                         </div>
 
                         <div className="text-xs text-slate-400">
                             Statut : <span
-                            className={`font-medium ${userDoc?.subscription?.status === 'active' ? 'text-green-600' : 'text-orange-600'} capitalize`}>
-                        {userDoc?.subscription?.status || "Inconnu"}
-                    </span>
+                            className={`font-medium ${userData?.subscription?.status === 'active' ? 'text-green-600' : 'text-orange-600'} capitalize`}>
+                                {userData?.subscription?.status === 'active' ? 'Actif' :
+                                    userData?.subscription?.status === 'trialing' ? 'Essai' :
+                                        userData?.subscription?.status === 'canceled' ? 'Annulé' :
+                                            userData?.subscription?.status || "Gratuit"}
+                            </span>
                         </div>
 
                         <div className="pt-2 flex flex-col gap-2">
-                            <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-md"
-                                    onClick={() => alert("Redirection vers portail Stripe...")}>
+                            <Button
+                                className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-md"
+                                onClick={() => handlePortal()}
+                                disabled={!!loadingAction}
+                            >
+                                {loadingAction === "portal" ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                ) : (
+                                    <ExternalLink className="mr-2 h-4 w-4"/>
+                                )}
                                 Gérer mon abonnement
                             </Button>
 
-                            {userDoc?.subscription?.plan === "starter" && (
-                                <Button variant="outline"
-                                        className="w-full border-indigo-200 text-indigo-700 hover:bg-indigo-50 rounded-xl"
-                                        onClick={() => alert("Redirection vers page de prix...")}>
-                                    <ArrowUpCircle className="mr-2 h-4 w-4"/> Passer à la vitesse supérieure
+                            {userData?.subscription?.plan !== "pro" && (
+                                <Button
+                                    variant="outline"
+                                    className="w-full border-indigo-200 text-indigo-700 hover:bg-indigo-50 rounded-xl"
+                                    onClick={() => userData?.subscription?.plan === "starter"
+                                        ? handlePortal("price_1Sxtex9mcp2EBniBDOFUCQEr")
+                                        : router.push("/billing")
+                                    }
+                                    disabled={!!loadingAction}
+                                >
+                                    {loadingAction === "portal_upgrade" ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                    ) : (
+                                        <ArrowUpCircle className="mr-2 h-4 w-4"/>
+                                    )}
+                                    {userData?.subscription?.plan === "starter" ? "Passer au plan Pro" : "Voir les offres"}
                                 </Button>
                             )}
                         </div>

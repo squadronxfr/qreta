@@ -1,59 +1,56 @@
 import {NextResponse} from "next/server";
 import {stripe} from "@/lib/stripe";
 import {adminDb} from "@/lib/firebase/admin";
+import Stripe from "stripe";
 
 export async function POST(req: Request) {
     try {
         const {priceId, userId, email} = await req.json();
 
         if (!userId || !priceId) {
-            return new NextResponse("Missing data", {status: 400});
+            return NextResponse.json({error: "Missing data"}, {status: 400});
         }
 
         const userDoc = await adminDb.collection("users").doc(userId).get();
         const userData = userDoc.data();
 
         let customerId = userData?.subscription?.stripeCustomerId;
+        let isNewCustomer = false;
 
         if (!customerId) {
             const customer = await stripe.customers.create({
-                email: email,
-                metadata: {
-                    firebaseUserId: userId,
-                },
+                email,
+                metadata: {firebaseUserId: userId},
             });
             customerId = customer.id;
+            isNewCustomer = true;
 
             await adminDb.collection("users").doc(userId).update({
-                "subscription.stripeCustomerId": customerId
+                "subscription.stripeCustomerId": customerId,
             });
         }
 
-        const session = await stripe.checkout.sessions.create({
+        const sessionParams: Stripe.Checkout.SessionCreateParams = {
             customer: customerId,
-            line_items: [
-                {
-                    price: priceId,
-                    quantity: 1,
-                },
-            ],
+            line_items: [{price: priceId, quantity: 1}],
             mode: "subscription",
             payment_method_types: ["card"],
             success_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing?success=true`,
             cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing?canceled=true`,
             client_reference_id: userId,
             allow_promotion_codes: true,
-            subscription_data: {
-                trial_period_days: 14,
-                metadata: {
-                    firebaseUserId: userId
-                }
-            },
-        });
+        };
 
+        if (isNewCustomer) {
+            sessionParams.subscription_data = {
+                metadata: {firebaseUserId: userId},
+            };
+        }
+
+        const session = await stripe.checkout.sessions.create(sessionParams);
         return NextResponse.json({url: session.url});
     } catch (error) {
         console.error("[STRIPE_CHECKOUT]", error);
-        return new NextResponse("Internal Error", {status: 500});
+        return NextResponse.json({error: "Internal Error"}, {status: 500});
     }
 }

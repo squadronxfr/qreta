@@ -48,9 +48,9 @@ export default function SuperAdminPage() {
             }));
 
             setUsers(fullData);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Erreur refresh admin:", err);
-            setError(err.message);
+            setError(err instanceof Error ? err.message : "Erreur inconnue");
         } finally {
             setIsLoadingData(false);
         }

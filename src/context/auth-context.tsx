@@ -10,7 +10,7 @@ import {
 } from "firebase/auth";
 import {doc, onSnapshot} from "firebase/firestore";
 import {auth, db} from "@/lib/firebase/config";
-import {UserDoc} from "@/types/user"; // Import de ton type personnalisé
+import {UserDoc} from "@/types/user";
 
 interface AuthContextType {
     user: User | null;
@@ -43,6 +43,8 @@ export function AuthProvider({children}: { children: ReactNode }) {
             if (!currentUser) {
                 setUserData(null);
                 setLoading(false);
+            } else {
+                setLoading(true);
             }
         });
         return () => unsubscribe();
@@ -51,7 +53,6 @@ export function AuthProvider({children}: { children: ReactNode }) {
     useEffect(() => {
         if (!user) return;
 
-        setLoading(true);
         const userRef = doc(db, "users", user.uid);
 
         const unsubscribeFirestore = onSnapshot(userRef, (docSnap) => {
