@@ -79,6 +79,10 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
+    const isFirebaseStorageUrl = (url: string) => {
+        return url.includes("firebasestorage.googleapis.com");
+    };
+
     const handleSubmit = async (e: SyntheticEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -93,13 +97,15 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                 const snapshot = await uploadBytes(storageRef, imageFile);
                 finalImageUrl = await getDownloadURL(snapshot.ref);
 
-                if (item.imageUrl) {
+                if (item.imageUrl && isFirebaseStorageUrl(item.imageUrl)) {
                     const oldImageRef = ref(storage, item.imageUrl);
                     await deleteObject(oldImageRef).catch(() => null);
                 }
             } else if (!previewUrl && item.imageUrl) {
-                const oldImageRef = ref(storage, item.imageUrl);
-                await deleteObject(oldImageRef).catch(() => null);
+                if (isFirebaseStorageUrl(item.imageUrl)) {
+                    const oldImageRef = ref(storage, item.imageUrl);
+                    await deleteObject(oldImageRef).catch(() => null);
+                }
                 finalImageUrl = "";
             }
 
@@ -113,7 +119,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
 
             onOpenChange(false);
         } catch (error) {
-            console.error(error);
+            console.error("Erreur mise à jour:", error);
         } finally {
             setLoading(false);
         }
@@ -123,7 +129,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-2xl">
                 <DialogHeader>
-                    <DialogTitle className="font-heading">Modifier l'article</DialogTitle>
+                    <DialogTitle className="font-heading">Modifier l&#39;article</DialogTitle>
                     <DialogDescription>
                         Mise à jour des informations de la prestation ou du produit.
                     </DialogDescription>
@@ -180,7 +186,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                                 })}
                             />
                             <label htmlFor="edit-starting" className="text-xs font-medium cursor-pointer">Prix
-                                "Dès"</label>
+                                &#34;Dès&#34;</label>
                         </div>
                     </div>
 

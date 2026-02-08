@@ -47,7 +47,7 @@ export function Navbar() {
                             Connexion
                         </Link>
                         <Button asChild className="rounded-full bg-slate-900 hover:bg-slate-800 text-white px-6">
-                            <Link href="/login">Essai gratuit <ArrowRight className="ml-2 h-4 w-4"/></Link>
+                            <Link href="/signup">Créer mon catalogue<ArrowRight className="h-4 w-2"/></Link>
                         </Button>
                     </div>
                 </div>

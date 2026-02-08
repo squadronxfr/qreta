@@ -13,6 +13,7 @@ import {StoreSettingsForm} from "@/components/stores/store-settings-form";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
+// import {DemoDataLoader} from "@/components/store-front/demo-data-loader";
 import {
     Eye,
     LayoutGrid,
@@ -89,6 +90,8 @@ export default function StoreDashboardPage({params}: PageProps) {
                             <StoreIcon className="h-8 w-8"/>
                         )}
                     </div>
+                    {/* Charger des données de test */}
+                    {/*<DemoDataLoader storeId={id}/>*/}
                     <div>
                         <div className="flex items-center gap-3 mb-1">
                             <h1 className="text-3xl font-bold font-heading tracking-tight">{store.name}</h1>

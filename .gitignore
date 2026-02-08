@@ -43,3 +43,4 @@ next-env.d.ts
 .idea
 .node_modules
 
+src/components/store-front/demo-data-loader.tsx

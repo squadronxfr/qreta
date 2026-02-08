@@ -82,7 +82,7 @@ export default function LandingPage() {
                             <Button size="lg"
                                     className="h-14 px-10 text-lg rounded-full bg-slate-900 hover:bg-slate-800 shadow-2xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1"
                                     asChild>
-                                <Link href="/login">Créer mon catalogue gratuit</Link>
+                                <Link href="/signup">Créer mon catalogue gratuit</Link>
                             </Button>
                             <Button size="lg" variant="ghost"
                                     className="h-14 px-10 text-lg rounded-full text-slate-600 hover:bg-slate-50 hover:text-indigo-600">
@@ -107,8 +107,6 @@ export default function LandingPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
-
-                        {/* Carte 1 : HYBRIDE (Le point fort) */}
                         <motion.div
                             whileHover={{y: -5}}
                             className="md:col-span-2 bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden group"
@@ -133,7 +131,6 @@ export default function LandingPage() {
                             </div>
                         </motion.div>
 
-                        {/* Carte 2 : VISIBILITÉ */}
                         <motion.div
                             whileHover={{y: -5}}
                             className="bg-slate-900 p-10 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden group"
@@ -152,7 +149,6 @@ export default function LandingPage() {
                             </p>
                         </motion.div>
 
-                        {/* Carte 3 : Multi-activités */}
                         <motion.div
                             whileHover={{y: -5}}
                             className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm"
@@ -168,7 +164,6 @@ export default function LandingPage() {
                             </p>
                         </motion.div>
 
-                        {/* Carte 4 : SIMPLICITÉ */}
                         <motion.div
                             whileHover={{y: -5}}
                             className="md:col-span-2 bg-gradient-to-br from-indigo-50 to-white p-10 rounded-[2.5rem] border border-indigo-100 shadow-sm relative overflow-hidden"
@@ -193,7 +188,6 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* --- SPOTLIGHT EXPERIENCE --- */}
             <section id="benefits" className="py-32 overflow-hidden">
                 <div className="container mx-auto px-6">
                     <div className="grid lg:grid-cols-2 gap-20 items-center">
@@ -255,7 +249,6 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* --- PRICING SECTION --- */}
             <section id="pricing" className="py-32 bg-slate-50 border-t border-slate-200">
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-20">
@@ -266,8 +259,6 @@ export default function LandingPage() {
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
-
-                        {/* PLAN STARTER */}
                         <Card className="border-slate-200 shadow-sm bg-white/50 backdrop-blur-sm">
                             <CardHeader className="pb-8">
                                 <CardTitle className="font-heading text-xl text-slate-600">Starter</CardTitle>
@@ -292,12 +283,11 @@ export default function LandingPage() {
                             <CardFooter>
                                 <Button variant="outline"
                                         className="w-full h-12 rounded-xl font-semibold border-slate-200" asChild>
-                                    <Link href="/login">Créer mon compte</Link>
+                                    <Link href="/signup">Créer mon compte</Link>
                                 </Button>
                             </CardFooter>
                         </Card>
 
-                        {/* PLAN PRO (Hero) */}
                         <div className="relative transform md:-translate-y-8 z-10">
                             <div
                                 className="absolute -inset-[1px] bg-gradient-to-b from-indigo-500 to-purple-600 rounded-[24px]"/>
@@ -379,7 +369,6 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* --- FINAL CTA --- */}
             <section className="py-24 bg-slate-950 text-white overflow-hidden relative isolate">
                 <div
                     className="absolute top-0 right-0 -z-10 w-[600px] h-[600px] bg-indigo-600/30 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"/>
@@ -397,7 +386,7 @@ export default function LandingPage() {
                         <Button size="lg"
                                 className="h-16 px-12 text-xl rounded-full bg-white text-slate-950 hover:bg-indigo-50 hover:scale-105 transition-all font-bold"
                                 asChild>
-                            <Link href="/login">Créer mon catalogue maintenant</Link>
+                            <Link href="/signup">Créer mon catalogue maintenant</Link>
                         </Button>
                     </div>
                     <p className="mt-8 text-sm text-slate-600 font-medium uppercase tracking-widest">
@@ -406,14 +395,13 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* --- FOOTER --- */}
             <footer className="py-12 bg-slate-950 text-slate-400 border-t border-slate-900/50">
                 <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="font-heading text-2xl font-bold text-white">
-                        qreta<span className="text-indigo-500">.</span>
+                        Qreta<span className="text-indigo-500">.</span>
                     </div>
                     <div className="text-sm font-medium">
-                        © 2026 qreta Inc. Fait avec passion pour tous les pros.
+                        © 2026 Qreta Inc. Fait avec passion pour tous les pros.
                     </div>
                     <div className="flex gap-8 text-sm font-medium">
                         <a href="#" className="hover:text-indigo-400 transition-colors">Légal</a>
