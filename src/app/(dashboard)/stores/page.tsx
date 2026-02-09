@@ -42,7 +42,7 @@ export default function StoresPage() {
                     <h1 className="text-3xl font-bold font-heading tracking-tight text-slate-900">Mes Boutiques</h1>
                     <p className="text-slate-500 mt-1">Gérez vos catalogues et vos paramètres.</p>
                 </div>
-                <CreateStoreDialog/>
+                <CreateStoreDialog storeCount={stores.length}/>
             </div>
 
             {loading ? (
@@ -59,10 +59,11 @@ export default function StoresPage() {
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">Aucune boutique</h3>
                     <p className="text-slate-500 max-w-sm mb-6">
-                        Vous n'avez pas encore créé de boutique. Lancez-vous pour commencer à vendre ou présenter vos
+                        Vous n&#39;avez pas encore créé de boutique. Lancez-vous pour commencer à vendre ou présenter
+                        vos
                         services.
                     </p>
-                    <CreateStoreDialog/>
+                    <CreateStoreDialog storeCount={stores.length}/>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

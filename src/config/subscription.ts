@@ -5,7 +5,7 @@ export const SUBSCRIPTION_PLANS = {
         price: 0,
         priceId: null,
         quota: 1,
-        features: ["1 Boutique", "Produits illimités", "QR Code", "Branding Qreta"],
+        features: ["1 Boutique", "Produits & Services illimités", "QR Code", "Branding Qreta"],
     },
     starter: {
         key: "starter",
@@ -13,7 +13,7 @@ export const SUBSCRIPTION_PLANS = {
         price: 9,
         priceId: "price_1Sxtea9mcp2EBniBzRXXntql",
         quota: 3,
-        features: ["3 Boutiques", "Gestion des ruptures", "Support standard", "Branding Qreta"],
+        features: ["3 Boutiques", "Gestion affichage", "Branding Qreta"],
     },
     pro: {
         key: "pro",

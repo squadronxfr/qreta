@@ -1,10 +1,12 @@
 "use client";
 
-import {useState, SyntheticEvent, ChangeEvent, useRef, useEffect} from "react";
+import React, {useState, useRef, useEffect, ChangeEvent} from "react";
 import {db, storage} from "@/lib/firebase/config";
 import {doc, updateDoc} from "firebase/firestore";
 import {ref, uploadBytes, getDownloadURL, deleteObject} from "firebase/storage";
 import {Item, Category} from "@/types/store";
+import {useAuth} from "@/context/auth-context";
+import {PlanKey} from "@/config/subscription";
 import {
     Dialog,
     DialogContent,
@@ -24,7 +26,15 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Textarea} from "@/components/ui/textarea";
 import {Checkbox} from "@/components/ui/checkbox";
-import {Loader2, ImageIcon, X} from "lucide-react";
+import {Switch} from "@/components/ui/switch";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {Loader2, ImageIcon, X, Lock} from "lucide-react";
+import {toast} from "sonner";
 
 interface EditItemDialogProps {
     item: Item;
@@ -34,10 +44,14 @@ interface EditItemDialogProps {
 }
 
 export function EditItemDialog({item, categories, open, onOpenChange}: EditItemDialogProps) {
+    const {userData} = useAuth();
     const [loading, setLoading] = useState<boolean>(false);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const userPlanKey = (userData?.subscription?.plan as PlanKey) || "free";
+    const canManageAvailability = userPlanKey !== "free";
 
     const [formData, setFormData] = useState({
         name: item.name,
@@ -46,7 +60,8 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
         categoryId: item.categoryId,
         type: item.type,
         isStartingPrice: item.isStartingPrice,
-        duration: item.duration || ""
+        duration: item.duration || "",
+        isActive: item.isActive ?? true
     });
 
     useEffect(() => {
@@ -58,7 +73,8 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                 categoryId: item.categoryId,
                 type: item.type,
                 isStartingPrice: item.isStartingPrice,
-                duration: item.duration || ""
+                duration: item.duration || "",
+                isActive: item.isActive ?? true
             });
             setPreviewUrl(item.imageUrl || null);
             setImageFile(null);
@@ -68,8 +84,12 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setImageFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImageFile(file);
+                setPreviewUrl(reader.result as string);
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -83,7 +103,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
         return url.includes("firebasestorage.googleapis.com");
     };
 
-    const handleSubmit = async (e: SyntheticEvent) => {
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
 
@@ -110,16 +130,28 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
             }
 
             const itemRef = doc(db, "items", item.id);
+
+            const finalIsActive = canManageAvailability ? formData.isActive : true;
+
             await updateDoc(itemRef, {
-                ...formData,
+                name: formData.name,
+                description: formData.description,
+                categoryId: formData.categoryId,
+                type: formData.type,
+                isStartingPrice: formData.isStartingPrice,
+                duration: formData.duration,
+
+                isActive: finalIsActive,
                 price: parseFloat(formData.price) || 0,
                 imageUrl: finalImageUrl || "",
                 updatedAt: new Date(),
             });
 
+            toast.success("Produit mis à jour");
             onOpenChange(false);
         } catch (error) {
             console.error("Erreur mise à jour:", error);
+            toast.error("Erreur lors de la mise à jour");
         } finally {
             setLoading(false);
         }
@@ -139,8 +171,10 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>Type</Label>
-                            <Select onValueChange={(v: "product" | "service") => setFormData({...formData, type: v})}
-                                    defaultValue={formData.type}>
+                            <Select
+                                value={formData.type}
+                                onValueChange={(v: "product" | "service") => setFormData({...formData, type: v})}
+                            >
                                 <SelectTrigger className="rounded-xl"><SelectValue/></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="service">Service</SelectItem>
@@ -150,8 +184,10 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                         </div>
                         <div className="space-y-2">
                             <Label>Catégorie</Label>
-                            <Select onValueChange={(v) => setFormData({...formData, categoryId: v})}
-                                    defaultValue={formData.categoryId}>
+                            <Select
+                                value={formData.categoryId}
+                                onValueChange={(v) => setFormData({...formData, categoryId: v})}
+                            >
                                 <SelectTrigger className="rounded-xl"><SelectValue/></SelectTrigger>
                                 <SelectContent>
                                     {categories.map(cat => (
@@ -185,9 +221,45 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                                     isStartingPrice: checked === true
                                 })}
                             />
-                            <label htmlFor="edit-starting" className="text-xs font-medium cursor-pointer">Prix
-                                &#34;À partir de&#34;</label>
+                            <label htmlFor="edit-starting" className="text-xs font-medium cursor-pointer">
+                                Prix &#34;À partir de&#34;
+                            </label>
                         </div>
+                    </div>
+
+                    <div
+                        className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                                <Label className="text-base font-medium">En stock / Disponible</Label>
+                                {!canManageAvailability && <Lock className="h-3 w-3 text-slate-400"/>}
+                            </div>
+                            <p className="text-xs text-slate-500">
+                                {canManageAvailability
+                                    ? "Masquer ce produit du catalogue sans le supprimer."
+                                    : "Passez au plan Starter pour gérer les ruptures de stock."}
+                            </p>
+                        </div>
+
+                        {canManageAvailability ? (
+                            <Switch
+                                checked={formData.isActive} // CORRECTION : available -> isActive
+                                onCheckedChange={(checked) => setFormData({...formData, isActive: checked})}
+                            />
+                        ) : (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div onClick={(e) => e.preventDefault()}>
+                                            <Switch checked={true} disabled className="opacity-50"/>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Fonctionnalité réservée aux membres Starter & Pro</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
                     </div>
 
                     <div className="space-y-2">

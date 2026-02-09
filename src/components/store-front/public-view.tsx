@@ -176,7 +176,7 @@ export function PublicStoreView({store, categories, items}: PublicViewProps) {
 
             <main className="container max-w-5xl mx-auto px-4 py-6 md:py-8 pb-12 space-y-8 md:space-y-10">
                 {categories.map((category) => {
-                    const categoryItems = filteredItems.filter(item => item.categoryId === category.id);
+                    const categoryItems = filteredItems.filter(item => item.categoryId === category.id && item.isActive);
                     if (categoryItems.length === 0) return null;
 
                     return (
