@@ -104,12 +104,12 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 rounded-lg">
-                    <Plus className="mr-2 h-4 w-4"/> Ajouter un article
+                    <Plus className="mr-2 h-4 w-4"/> Nouveau Produit / Service
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-2xl">
                 <DialogHeader>
-                    <DialogTitle className="font-heading">Nouvel Article / Prestation</DialogTitle>
+                    <DialogTitle className="font-heading">Nouveau Produit / Service</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-5 py-4">
                     <div className="grid grid-cols-2 gap-4">

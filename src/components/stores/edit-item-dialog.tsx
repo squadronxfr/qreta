@@ -186,7 +186,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                                 })}
                             />
                             <label htmlFor="edit-starting" className="text-xs font-medium cursor-pointer">Prix
-                                &#34;Dès&#34;</label>
+                                &#34;À partir de&#34;</label>
                         </div>
                     </div>
 

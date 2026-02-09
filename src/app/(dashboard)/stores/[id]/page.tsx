@@ -124,7 +124,7 @@ export default function StoreDashboardPage({params}: PageProps) {
                     <div className="flex flex-col md:flex-row justify-between gap-4 bg-slate-50 p-6 rounded-3xl border">
                         <div className="flex items-center gap-3">
                             <LayoutGrid className="h-5 w-5 text-indigo-600"/>
-                            <h2 className="text-lg font-bold font-heading">Gestion des articles</h2>
+                            <h2 className="text-lg font-bold font-heading">Gestion du catalogue</h2>
                         </div>
                         <div className="flex gap-2">
                             <AddCategoryDialog storeId={id}/>
@@ -165,7 +165,7 @@ export default function StoreDashboardPage({params}: PageProps) {
                                                     <h4 className="font-bold truncate">{item.name}</h4>
                                                     <p className="text-md font-bold text-indigo-600">
                                                         {item.isStartingPrice &&
-                                                            <span className="text-[10px] mr-1">Dès</span>}
+                                                            <span className="text-[10px] mr-1">À partir de</span>}
                                                         {item.price}€
                                                     </p>
                                                 </div>

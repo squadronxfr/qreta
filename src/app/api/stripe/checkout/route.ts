@@ -8,14 +8,13 @@ export async function POST(req: Request) {
         const {priceId, userId, email} = await req.json();
 
         if (!userId || !priceId) {
-            return NextResponse.json({error: "Missing data"}, {status: 400});
+            return NextResponse.json({error: "Missing parameters"}, {status: 400});
         }
 
         const userDoc = await adminDb.collection("users").doc(userId).get();
         const userData = userDoc.data();
 
         let customerId = userData?.subscription?.stripeCustomerId;
-        let isNewCustomer = false;
 
         if (!customerId) {
             const customer = await stripe.customers.create({
@@ -23,8 +22,6 @@ export async function POST(req: Request) {
                 metadata: {firebaseUserId: userId},
             });
             customerId = customer.id;
-            isNewCustomer = true;
-
             await adminDb.collection("users").doc(userId).update({
                 "subscription.stripeCustomerId": customerId,
             });
@@ -39,18 +36,15 @@ export async function POST(req: Request) {
             cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing?canceled=true`,
             client_reference_id: userId,
             allow_promotion_codes: true,
-        };
-
-        if (isNewCustomer) {
-            sessionParams.subscription_data = {
+            subscription_data: {
                 metadata: {firebaseUserId: userId},
-            };
-        }
+            },
+        };
 
         const session = await stripe.checkout.sessions.create(sessionParams);
         return NextResponse.json({url: session.url});
     } catch (error) {
         console.error("[STRIPE_CHECKOUT]", error);
-        return NextResponse.json({error: "Internal Error"}, {status: 500});
+        return NextResponse.json({error: "Internal Server Error"}, {status: 500});
     }
 }
