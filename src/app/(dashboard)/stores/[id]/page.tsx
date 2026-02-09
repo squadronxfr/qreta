@@ -89,8 +89,8 @@ export default function StoreDashboardPage({params}: PageProps) {
                 statusFilter === "all"
                     ? true
                     : statusFilter === "active"
-                        ? item.isActive !== false
-                        : item.isActive === false;
+                        ? item.isActive
+                        : !item.isActive;
 
             const matchesCategory =
                 categoryFilter === "all"
@@ -123,7 +123,7 @@ export default function StoreDashboardPage({params}: PageProps) {
                 className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 bg-white p-6 rounded-3xl border shadow-sm">
                 <div className="flex items-center gap-5">
                     <div
-                        className="h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0 overflow-hidden relative border-4 border-white">
+                        className="h-20 w-20 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0 overflow-hidden relative border-4 border-white">
                         {store.logoUrl ? (
                             <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover"/>
                         ) : (
@@ -273,7 +273,7 @@ export default function StoreDashboardPage({params}: PageProps) {
                                                         onClick={() => setEditingItemId(item.id)}
                                                         className={cn(
                                                             "group relative flex gap-4 p-3 bg-white border border-slate-200 rounded-2xl transition-all cursor-pointer hover:shadow-md hover:border-indigo-200",
-                                                            item.isActive === false && "opacity-75 bg-slate-50"
+                                                            !item.isActive && "opacity-75 bg-slate-50"
                                                         )}
                                                     >
                                                         <div
@@ -289,7 +289,7 @@ export default function StoreDashboardPage({params}: PageProps) {
                                                                         <Wrench className="h-8 w-8"/>}
                                                                 </div>
                                                             )}
-                                                            {item.isActive === false && (
+                                                            {!item.isActive && (
                                                                 <div
                                                                     className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
                                                                     <Badge variant="secondary"

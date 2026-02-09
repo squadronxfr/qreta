@@ -78,9 +78,9 @@ export function PublicStoreView({store, categories, items}: PublicViewProps) {
                         className="w-full h-full object-cover opacity-80"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900"/>
+                    <div className="w-full h-full bg-linear-to-br from-slate-800 to-slate-900"/>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent"/>
+                <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-900/40 to-transparent"/>
 
                 <div className="absolute bottom-0 left-0 w-full p-6 pb-6 md:pb-12 container mx-auto max-w-5xl">
                     <motion.div
