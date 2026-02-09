@@ -1,9 +1,10 @@
 import {notFound} from "next/navigation";
 import {db} from "@/lib/firebase/config";
-import {collection, query, where, getDocs} from "firebase/firestore";
+import {collection, query, where, getDocs, doc, getDoc} from "firebase/firestore";
 import {PublicStoreView} from "@/components/store-front/public-view";
 import {Store, Category, Item} from "@/types/store";
 import {Metadata} from "next";
+import {PlanKey} from "@/config/subscription";
 
 export const dynamic = 'force-dynamic';
 
@@ -13,14 +14,10 @@ interface PageProps {
 
 export async function generateMetadata({params}: PageProps): Promise<Metadata> {
     const {slug} = await params;
-
     const q = query(collection(db, "stores"), where("slug", "==", slug));
     const snap = await getDocs(q);
-
     if (snap.empty) return {title: "Boutique introuvable - Qreta"};
-
     const store = snap.docs[0].data() as Store;
-
     return {
         title: `${store.name} | Catalogue`,
         description: store.description || `Découvrez le catalogue de ${store.name} sur Qreta.`,
@@ -60,6 +57,21 @@ export default async function PublicStorePage({params}: PageProps) {
         );
     }
 
+    let isPro = false;
+    if (storeData.userId) {
+        try {
+            const userDocRef = doc(db, "users", storeData.userId);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                const plan = (userData.subscription?.plan as PlanKey) || "free";
+                isPro = plan === "pro";
+            }
+        } catch (e) {
+            console.error("Erreur récupération user plan", e);
+        }
+    }
+
     const qCats = query(collection(db, "categories"), where("storeId", "==", storeDoc.id));
     const catsSnapPromise = getDocs(qCats);
 
@@ -78,7 +90,7 @@ export default async function PublicStorePage({params}: PageProps) {
         .filter(i => i.isActive)
         .sort((a, b) => a.order - b.order);
 
-    const serializedStore = JSON.parse(JSON.stringify({id: storeDoc.id, ...storeData}));
+    const serializedStore = JSON.parse(JSON.stringify({...storeData, id: storeDoc.id}));
     const serializedCats = JSON.parse(JSON.stringify(categories));
     const serializedItems = JSON.parse(JSON.stringify(items));
 
@@ -87,6 +99,7 @@ export default async function PublicStorePage({params}: PageProps) {
             store={serializedStore}
             categories={serializedCats}
             items={serializedItems}
+            isPro={isPro}
         />
     );
 }

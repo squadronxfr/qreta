@@ -1,6 +1,6 @@
 "use client";
 
-import {useState, useEffect} from "react";
+import React, {useState, useEffect} from "react";
 import {Store, Category, Item} from "@/types/store";
 import {motion, AnimatePresence} from "framer-motion";
 import {
@@ -19,9 +19,10 @@ interface PublicViewProps {
     store: Store;
     categories: Category[];
     items: Item[];
+    isPro: boolean;
 }
 
-export function PublicStoreView({store, categories, items}: PublicViewProps) {
+export function PublicStoreView({store, categories, items, isPro}: PublicViewProps) {
     const [activeCategory, setActiveCategory] = useState<string>(categories[0]?.id || "");
     const [selectedItem, setSelectedItem] = useState<Item | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
@@ -88,7 +89,6 @@ export function PublicStoreView({store, categories, items}: PublicViewProps) {
                         animate={{opacity: 1, y: 0}}
                         className="flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-end"
                     >
-                        {/* Logo légèrement réduit */}
                         <div
                             className="h-16 w-16 md:h-24 md:w-24 rounded-2xl md:rounded-3xl border-4 border-white/10 bg-white shadow-2xl overflow-hidden flex-shrink-0 backdrop-blur-sm">
                             {store.logoUrl ? (
@@ -113,7 +113,7 @@ export function PublicStoreView({store, categories, items}: PublicViewProps) {
                                         className="flex items-center gap-1.5 text-[10px] md:text-xs font-medium text-slate-200 bg-white/10 px-2 py-1 md:px-3 md:py-1.5 rounded-full backdrop-blur-md border border-white/10 hover:bg-white/20 transition-colors cursor-pointer"
                                         onClick={() => window.open(`http://googleusercontent.com/maps.google.com/search/${encodeURIComponent(store.address!)}`, '_blank')}>
                                         <MapPin className="h-3 w-3"/> <span
-                                        className="truncate max-w-[200px]">{store.address}</span>
+                                        className="truncate max-w-50">{store.address}</span>
                                     </div>
                                 )}
                                 <div className="flex gap-2">
@@ -183,7 +183,7 @@ export function PublicStoreView({store, categories, items}: PublicViewProps) {
                         <section key={category.id} id={`cat-${category.id}`} className="scroll-mt-32">
                             <div className="flex items-center gap-4 mb-4 md:mb-6">
                                 <h2 className="text-lg md:text-xl font-bold font-heading text-slate-900">{category.name}</h2>
-                                <div className="h-[1px] flex-1 bg-slate-200 mt-1"/>
+                                <div className="h-px flex-1 bg-slate-200 mt-1"/>
                                 <span
                                     className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded-full">{categoryItems.length}</span>
                             </div>
@@ -200,7 +200,7 @@ export function PublicStoreView({store, categories, items}: PublicViewProps) {
                                         className="group relative bg-white p-2.5 md:p-3 rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-indigo-100 transition-all cursor-pointer flex gap-3 md:gap-4 overflow-hidden"
                                     >
                                         <div
-                                            className="h-20 w-20 md:h-24 md:w-24 flex-shrink-0 rounded-xl overflow-hidden bg-slate-50 relative border border-slate-100">
+                                            className="h-20 w-20 md:h-24 md:w-24 shrink-0 rounded-xl overflow-hidden bg-slate-50 relative border border-slate-100">
                                             {item.imageUrl ? (
                                                 <img src={item.imageUrl} alt={item.name}
                                                      className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"/>
@@ -332,57 +332,63 @@ export function PublicStoreView({store, categories, items}: PublicViewProps) {
                 )}
             </AnimatePresence>
 
-            <footer className="bg-white border-t border-slate-100 py-8 pb-12 mt-8">
-                <div className="container max-w-5xl mx-auto px-4">
-                    <div className="flex flex-col items-center justify-center text-center gap-6 md:gap-8">
+            {!isPro && (
+                <footer className="bg-white border-t border-slate-100 py-8 pb-12 mt-8">
+                    <div className="container max-w-5xl mx-auto px-4">
+                        <div className="flex flex-col items-center justify-center text-center gap-6 md:gap-8">
 
-                        <Link href="/"
-                              className="group flex flex-col items-center gap-3 transition-transform hover:-translate-y-1 duration-300">
+                            <Link href="/"
+                                  className="group flex flex-col items-center gap-3 transition-transform hover:-translate-y-1 duration-300">
+                                <div
+                                    className="h-12 w-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-200 rotate-3 group-hover:rotate-0 transition-all">
+                                    Q.
+                                </div>
+                                <div className="font-heading text-2xl font-bold text-slate-900 tracking-tight">
+                                    Qreta<span className="text-indigo-600">.</span>
+                                </div>
+                            </Link>
+
+                            <div className="space-y-2 max-w-sm mx-auto">
+                                <p className="text-slate-600 text-sm font-medium">
+                                    L&#39;expérience digitale simplifiée pour les commerçants.
+                                </p>
+                                <p className="text-slate-400 text-xs leading-relaxed">
+                                    Ce catalogue a été généré automatiquement avec la technologie Qreta.
+                                    Simple, rapide et élégant.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-4 items-center mt-2">
+                                <Button variant="outline" size="sm"
+                                        className="rounded-full px-6 border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-100 hover:bg-indigo-50 transition-all"
+                                        asChild>
+                                    <Link href="/">En savoir plus</Link>
+                                </Button>
+                                <Button size="sm"
+                                        className="rounded-full px-6 bg-slate-900 text-white hover:bg-slate-800 shadow-md"
+                                        asChild>
+                                    <Link href="/signup">Créer mon catalogue gratuitement</Link>
+                                </Button>
+                            </div>
+
                             <div
-                                className="h-12 w-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-200 rotate-3 group-hover:rotate-0 transition-all">
-                                Q.
+                                className="mt-2 border-t border-slate-50 w-full max-w-xs flex flex-col gap-2 justify-center items-center">
+                                <p className="text-[10px] text-slate-300 uppercase tracking-widest font-semibold">
+                                    © {new Date().getFullYear()} Qreta Inc.
+                                </p>
                             </div>
-                            <div className="font-heading text-2xl font-bold text-slate-900 tracking-tight">
-                                Qreta<span className="text-indigo-600">.</span>
-                            </div>
-                        </Link>
-
-                        <div className="space-y-2 max-w-sm mx-auto">
-                            <p className="text-slate-600 text-sm font-medium">
-                                L&#39;expérience digitale simplifiée pour les commerçants.
-                            </p>
-                            <p className="text-slate-400 text-xs leading-relaxed">
-                                Ce catalogue a été généré automatiquement avec la technologie Qreta.
-                                Simple, rapide et élégant.
-                            </p>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-4 items-center mt-2">
-                            <Button variant="outline" size="sm"
-                                    className="rounded-full px-6 border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-100 hover:bg-indigo-50 transition-all"
-                                    asChild>
-                                <Link href="/">
-                                    En savoir plus
-                                </Link>
-                            </Button>
-                            <Button size="sm"
-                                    className="rounded-full px-6 bg-slate-900 text-white hover:bg-slate-800 shadow-md"
-                                    asChild>
-                                <Link href="/signup">
-                                    Créer mon catalogue gratuitement
-                                </Link>
-                            </Button>
-                        </div>
-
-                        <div
-                            className="mt-2 border-t border-slate-50 w-full max-w-xs flex flex-col gap-2 justify-center items-center">
-                            <p className="text-[10px] text-slate-300 uppercase tracking-widest font-semibold">
-                                © {new Date().getFullYear()} Qreta Inc.
-                            </p>
                         </div>
                     </div>
+                </footer>
+            )}
+
+            {isPro && (
+                <div className="py-6 text-center">
+                    <p className="text-[10px] text-slate-300 uppercase tracking-widest">
+                        © {new Date().getFullYear()} {store.name}
+                    </p>
                 </div>
-            </footer>
+            )}
         </div>
     );
 }
