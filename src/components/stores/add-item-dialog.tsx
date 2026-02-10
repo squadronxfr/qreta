@@ -172,14 +172,14 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
                                     isStartingPrice: checked === true
                                 })}
                             />
-                            <label htmlFor="is-starting-price" className="text-xs font-medium cursor-pointer">Prix "À
-                                partir de"</label>
+                            <label htmlFor="is-starting-price" className="text-xs font-medium cursor-pointer">Prix &quot;À
+                                partir de&quot;</label>
                         </div>
                     </div>
 
                     {formData.type === "service" && (
                         <div className="space-y-2">
-                            <Label htmlFor="item-duration">Durée (Optionnel)</Label>
+                            <Label htmlFor="item-duration">Dur&eacute;e (Optionnel)</Label>
                             <Input
                                 id="item-duration"
                                 placeholder="Ex: 30 min, 1h..."
@@ -191,7 +191,7 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="item-image">Photo de l'article</Label>
+                        <Label htmlFor="item-image">Photo de l&apos;article</Label>
                         <div className="flex items-center gap-4">
                             <Input
                                 id="item-image"

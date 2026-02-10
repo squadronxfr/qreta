@@ -131,9 +131,9 @@ export function AdminUserActions({user, onUpdate}: AdminUserActionsProps) {
                         className={`cursor-pointer focus:bg-red-50 ${user.isBlocked ? "text-green-600 focus:text-green-700" : "text-red-600 focus:text-red-700"}`}
                     >
                         {user.isBlocked ? (
-                            <><Check className="mr-2 h-4 w-4"/> Débloquer l'accès</>
+                            <><Check className="mr-2 h-4 w-4"/> Débloquer l&apos;accès</>
                         ) : (
-                            <><ShieldAlert className="mr-2 h-4 w-4"/> Bloquer l'accès</>
+                            <><ShieldAlert className="mr-2 h-4 w-4"/> Bloquer l&apos;accès</>
                         )}
                     </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -190,9 +190,9 @@ export function AdminUserActions({user, onUpdate}: AdminUserActionsProps) {
             <Dialog open={showSubDialog} onOpenChange={setShowSubDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Modifier l'abonnement</DialogTitle>
+                        <DialogTitle>Modifier l&apos;abonnement</DialogTitle>
                         <DialogDescription>
-                            Modifie directement la base de données.
+                            Modifie directement la base de donn&eacute;es.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">

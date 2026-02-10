@@ -1,50 +1,41 @@
 import {NextResponse} from "next/server";
 import {stripe} from "@/lib/stripe";
 import {adminDb} from "@/lib/firebase/admin";
-import Stripe from "stripe";
 
 export async function POST(req: Request) {
     try {
-        const {priceId, userId, email} = await req.json();
+        const {priceId, userId, email, returnUrl: url} = await req.json();
 
         if (!userId || !priceId) {
-            return NextResponse.json({error: "Missing parameters"}, {status: 400});
+            return new NextResponse(JSON.stringify({error: "Missing data"}), {status: 400});
         }
 
         const userDoc = await adminDb.collection("users").doc(userId).get();
         const userData = userDoc.data();
+        const existingCustomerId = userData?.subscription?.stripeCustomerId;
 
-        let customerId = userData?.subscription?.stripeCustomerId;
-
-        if (!customerId) {
-            const customer = await stripe.customers.create({
-                email,
-                metadata: {firebaseUserId: userId},
-            });
-            customerId = customer.id;
-            await adminDb.collection("users").doc(userId).update({
-                "subscription.stripeCustomerId": customerId,
-            });
-        }
-
-        const sessionParams: Stripe.Checkout.SessionCreateParams = {
-            customer: customerId,
-            line_items: [{price: priceId, quantity: 1}],
+        const sessionConfig: Record<string, unknown> = {
             mode: "subscription",
             payment_method_types: ["card"],
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing?success=true`,
-            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing?canceled=true`,
+            line_items: [{price: priceId, quantity: 1}],
+            success_url: `${url}?success=true`,
+            cancel_url: `${url}?canceled=true`,
             client_reference_id: userId,
+            metadata: {userId},
             allow_promotion_codes: true,
-            subscription_data: {
-                metadata: {firebaseUserId: userId},
-            },
         };
 
-        const session = await stripe.checkout.sessions.create(sessionParams);
+        if (existingCustomerId) {
+            sessionConfig.customer = existingCustomerId;
+        } else {
+            sessionConfig.customer_email = email;
+        }
+
+        const session = await stripe.checkout.sessions.create(sessionConfig);
+
         return NextResponse.json({url: session.url});
-    } catch (error) {
-        console.error("[STRIPE_CHECKOUT]", error);
-        return NextResponse.json({error: "Internal Server Error"}, {status: 500});
+    } catch (error: unknown) {
+        console.error("[STRIPE CHECKOUT ERROR]", error);
+        return new NextResponse(JSON.stringify({error: error instanceof Error ? error.message : 'Unknown error'}), {status: 500});
     }
 }

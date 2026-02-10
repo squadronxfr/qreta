@@ -24,14 +24,12 @@ import {
 import {
     Eye,
     LayoutGrid,
-    Package,
-    Wrench,
     ChevronLeft,
     Store as StoreIcon,
     Search,
     Filter,
     Clock,
-    Layers
+    Layers, ImageIcon
 } from "lucide-react";
 import Link from "next/link";
 import {cn} from "@/lib/utils";
@@ -201,7 +199,8 @@ export default function StoreDashboardPage({params}: PageProps) {
                                     </SelectContent>
                                 </Select>
 
-                                <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+                                <Select value={statusFilter}
+                                        onValueChange={(v: "all" | "active" | "inactive") => setStatusFilter(v)}>
                                     <SelectTrigger
                                         className="w-full sm:w-[140px] rounded-xl bg-slate-50 border-slate-200">
                                         <div className="flex items-center gap-2">
@@ -234,8 +233,7 @@ export default function StoreDashboardPage({params}: PageProps) {
                                 </div>
                                 <h3 className="text-lg font-bold text-slate-900">Catalogue vide</h3>
                                 <p className="text-slate-500 mb-6 max-w-xs mx-auto">Commencez par ajouter une catégorie
-                                    pour structurer votre carte.</p>
-                                <AddCategoryDialog storeId={id}/>
+                                    pour structurer votre catalogue.</p>
                             </div>
                         ) : (
                             categories.map((cat) => {
@@ -284,9 +282,8 @@ export default function StoreDashboardPage({params}: PageProps) {
                                                             ) : (
                                                                 <div
                                                                     className="h-full w-full flex items-center justify-center text-slate-300">
-                                                                    {item.type === "product" ?
-                                                                        <Package className="h-8 w-8"/> :
-                                                                        <Wrench className="h-8 w-8"/>}
+                                                                    <ImageIcon
+                                                                        className="h-6 w-6 md:h-8 md:w-8 text-slate-300/50"/>
                                                                 </div>
                                                             )}
                                                             {!item.isActive && (

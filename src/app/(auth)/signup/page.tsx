@@ -1,6 +1,6 @@
 "use client";
 
-import {useState, SyntheticEvent} from "react";
+import React, {useState, SyntheticEvent} from "react";
 import {createUserWithEmailAndPassword, updateProfile} from "firebase/auth";
 import {FirebaseError} from "firebase/app";
 import {doc, setDoc, serverTimestamp} from "firebase/firestore";

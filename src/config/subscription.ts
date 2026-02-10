@@ -11,17 +11,17 @@ export const SUBSCRIPTION_PLANS = {
         key: "starter",
         name: "Starter",
         price: 9,
-        priceId: "price_1Sxtea9mcp2EBniBzRXXntql",
+        priceId: "price_1SyqH59mcp2EBniB2SH5CoGX",
         quota: 3,
-        features: ["3 Boutiques", "Gestion affichage", "Branding Qreta"],
+        features: ["Tous les avantages Free", "3 Boutiques", "Gestion de l'affichage", "Branding Qreta"],
     },
     pro: {
         key: "pro",
         name: "Pro",
         price: 29,
-        priceId: "price_1Sxtex9mcp2EBniBDOFUCQEr",
+        priceId: "price_1SyqG69mcp2EBniBjqYnoCFL",
         quota: Infinity,
-        features: ["Boutiques illimitées", "Marque blanche", "Support prioritaire"],
+        features: ["Tous les avantages Starter", "Boutiques illimitées", "Marque blanche", "Support"],
     },
 } as const;
 

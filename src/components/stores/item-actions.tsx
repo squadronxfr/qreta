@@ -86,7 +86,7 @@ export function ItemActions({item, onEdit}: ItemActionsProps) {
             <AlertDialog open={showDelete} onOpenChange={setShowDelete}>
                 <AlertDialogContent className="rounded-2xl">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Supprimer l'article ?</AlertDialogTitle>
+                        <AlertDialogTitle>Supprimer l&apos;article ?</AlertDialogTitle>
                         <AlertDialogDescription>
                             Cette action est définitive.
                         </AlertDialogDescription>

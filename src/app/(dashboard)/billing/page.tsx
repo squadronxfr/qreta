@@ -24,6 +24,7 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
     trialing: {label: "Essai gratuit", className: "bg-blue-100 text-blue-700"},
     past_due: {label: "Retard de paiement", className: "bg-orange-100 text-orange-700"},
     canceled: {label: "Annulé", className: "bg-red-100 text-red-700"},
+    unpaid: {label: "Impayé", className: "bg-red-50 text-red-600"}
 };
 
 export default function BillingPage() {
@@ -32,11 +33,11 @@ export default function BillingPage() {
         invoices,
         isLoadingInvoices,
         isProcessing,
-        error,
         currentPlanKey,
         isSubscribed,
         renewalDate,
-        handleCheckout,
+        cancelAtPeriodEnd,
+        onPlanAction,
         handlePortal,
         userData
     } = useBilling();
@@ -50,6 +51,8 @@ export default function BillingPage() {
 
     const showSuccess = searchParams.get("success") === "true";
     const showCanceled = searchParams.get("canceled") === "true";
+
+    const hasStripeAccount = !!userData?.subscription?.stripeCustomerId;
 
     return (
         <div className="container max-w-6xl mx-auto py-10 px-4">
@@ -76,19 +79,12 @@ export default function BillingPage() {
                 </Alert>
             )}
 
-            {error && (
-                <Alert className="mb-6 bg-red-50 border-red-200 text-red-800 rounded-2xl">
-                    <AlertCircle className="h-4 w-4 text-red-600"/>
-                    <AlertDescription>{error}</AlertDescription>
-                </Alert>
-            )}
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
 
                     <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
                         <CardHeader
-                            className="bg-gradient-to-r from-slate-50 to-indigo-50/30 border-b border-slate-100 pb-6">
+                            className="bg-linear-to-r from-slate-50 to-indigo-50/30 border-b border-slate-100 pb-6">
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-sm text-slate-500 mb-1">Plan actuel</p>
@@ -103,13 +99,26 @@ export default function BillingPage() {
                         <CardContent className="pt-6">
                             <div className="flex items-baseline gap-1 mb-1">
                                 <span className="text-4xl font-bold text-slate-900">{currentPlan.price}€</span>
-                                <span className="text-lg text-slate-400">/mois</span>
+                                <span className="text-sm text-slate-400">/mois</span>
                             </div>
-                            <p className="text-sm text-slate-500 mb-6">
-                                {isSubscribed && renewalDate ? `Renouvellement le ${renewalDate}` : "Aucun renouvellement prévu"}
+
+                            <p className="text-sm text-slate-500 mb-6 font-medium">
+                                {currentPlanKey === "free" ? (
+                                    "Plan gratuit à vie."
+                                ) : cancelAtPeriodEnd ? (
+                                    <span className="text-orange-600">
+                                        Votre abonnement se termine le {renewalDate}
+                                    </span>
+                                ) : renewalDate ? (
+                                    <span className="text-green-700">
+                                        Prochain renouvellement le {renewalDate}
+                                    </span>
+                                ) : (
+                                    "Date de renouvellement indisponible"
+                                )}
                             </p>
 
-                            {isSubscribed && (
+                            {hasStripeAccount && (
                                 <div className="flex gap-3">
                                     <Button
                                         onClick={() => handlePortal("portal_top")}
@@ -119,7 +128,7 @@ export default function BillingPage() {
                                         {isProcessing === "portal_top" ?
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin"/> :
                                             <ExternalLink className="mr-2 h-4 w-4"/>}
-                                        Gérer l'abonnement
+                                        Gérer l&#39;abonnement
                                     </Button>
                                 </div>
                             )}
@@ -136,7 +145,9 @@ export default function BillingPage() {
                                 .map((key) => {
                                     const plan = SUBSCRIPTION_PLANS[key];
                                     const Icon = PLAN_ICONS[key];
-                                    const isCurrent = currentPlanKey === key && isSubscribed;
+                                    const isCurrent = currentPlanKey === key;
+
+                                    const isDisabled = isProcessing === key;
 
                                     return (
                                         <Card
@@ -175,18 +186,21 @@ export default function BillingPage() {
                                                         </li>
                                                     ))}
                                                 </ul>
+
                                                 <Button
-                                                    onClick={() => isCurrent || isSubscribed ? handlePortal(key) : handleCheckout(key)}
-                                                    disabled={isProcessing === key}
+                                                    onClick={() => onPlanAction(key)}
+                                                    disabled={isDisabled}
                                                     className={cn(
                                                         "w-full rounded-xl",
-                                                        isCurrent ? "bg-slate-100 text-slate-400" : "bg-slate-900 hover:bg-slate-800 text-white",
+                                                        isCurrent ? "bg-slate-100 text-slate-600 hover:bg-slate-200" : "bg-slate-900 hover:bg-slate-800 text-white",
                                                         key === "pro" && !isCurrent && "bg-indigo-600 hover:bg-indigo-700"
                                                     )}
                                                 >
                                                     {isProcessing === key &&
                                                         <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                                    {isCurrent ? "Plan actuel" : (isSubscribed ? "Changer pour ce plan" : `Choisir ${plan.name}`)}
+                                                    {isCurrent
+                                                        ? "Gérer mon offre"
+                                                        : (isSubscribed ? "Changer vers ce plan" : `Choisir ${plan.name}`)}
                                                 </Button>
                                             </CardContent>
                                         </Card>
@@ -230,7 +244,7 @@ export default function BillingPage() {
                                                 <td className="px-6 py-4">
                                                     <Badge variant="outline"
                                                            className={inv.status === "paid" ? "bg-green-50 text-green-700 border-green-100" : ""}>
-                                                        Payée
+                                                        {inv.status === "paid" ? "Payée" : inv.status}
                                                     </Badge>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">

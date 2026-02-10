@@ -110,7 +110,7 @@ export function CategoryActions({category}: CategoryActionsProps) {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Supprimer la catégorie ?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Cela supprimera la section "{category.name}". Les articles liés à cette catégorie ne seront
+                            Cela supprimera la section &quot;{category.name}&quot;. Les articles liés à cette catégorie ne seront
                             plus visibles dans le catalogue.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
