@@ -6,10 +6,6 @@ import {adminDb} from "@/lib/firebase/admin";
 import {Timestamp} from "firebase-admin/firestore";
 import Stripe from "stripe";
 
-interface ExtendedSubscription extends Stripe.Subscription {
-    current_period_end: number;
-    cancel_at_period_end: boolean;
-}
 
 const toFirestoreTimestamp = (seconds: number | null | undefined): Timestamp => {
     if (!seconds) return Timestamp.now();
@@ -22,21 +18,25 @@ async function updateUserSubscription(
     customerId?: string
 ) {
     if (!userId) {
-        console.error("[STRIPE WEBHOOK] UserId manquante");
         return;
     }
 
     const priceId = subscription.items.data[0]?.price.id;
     const planId = getPlanByPriceId(priceId);
 
-    const sub = subscription as unknown as ExtendedSubscription;
+    const subscriptionAny = subscription as unknown as Record<string, unknown>;
+
+    const isCanceled = subscriptionAny.cancel_at_period_end || !!subscriptionAny.cancel_at;
+    const cancelDate = subscriptionAny.cancel_at ?
+        toFirestoreTimestamp(subscriptionAny.cancel_at as number) :
+        subscriptionAny.current_period_end ? toFirestoreTimestamp(subscriptionAny.current_period_end as number) : null;
 
     const updateData: Record<string, unknown> = {
-        "subscription.status": sub.status,
+        "subscription.status": subscription.status,
         "subscription.plan": planId,
-        "subscription.currentPeriodEnd": toFirestoreTimestamp(sub.current_period_end),
-        "subscription.cancelAtPeriodEnd": sub.cancel_at_period_end,
-        "subscription.stripeSubscriptionId": sub.id,
+        "subscription.currentPeriodEnd": cancelDate || toFirestoreTimestamp(subscriptionAny.billing_cycle_anchor as number),
+        "subscription.cancelAtPeriodEnd": isCanceled,
+        "subscription.stripeSubscriptionId": subscription.id,
         "subscription.stripePriceId": priceId,
         "updatedAt": Timestamp.now()
     };
@@ -46,7 +46,6 @@ async function updateUserSubscription(
     }
 
     await adminDb.collection("users").doc(userId).update(updateData);
-    console.log(`[STRIPE WEBHOOK] User ${userId} updated to plan ${planId}`);
 }
 
 export async function POST(req: Request) {
@@ -83,20 +82,21 @@ export async function POST(req: Request) {
 
             case "customer.subscription.updated":
             case "customer.subscription.deleted": {
-                const sub = event.data.object as Stripe.Subscription;
+                const subFromEvent = event.data.object as Stripe.Subscription;
+                const fullSub = await stripe.subscriptions.retrieve(subFromEvent.id);
+
                 const usersSnap = await adminDb.collection("users")
-                    .where("subscription.stripeCustomerId", "==", sub.customer)
+                    .where("subscription.stripeCustomerId", "==", fullSub.customer)
                     .limit(1)
                     .get();
 
                 if (!usersSnap.empty) {
-                    await updateUserSubscription(usersSnap.docs[0].id, sub);
+                    await updateUserSubscription(usersSnap.docs[0].id, fullSub);
                 }
                 break;
             }
         }
-    } catch (error) {
-        console.error(`[WEBHOOK ERROR] ${event.type}:`, error);
+    } catch {
         return new NextResponse("Internal Server Error", {status: 500});
     }
 

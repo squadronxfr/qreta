@@ -18,7 +18,7 @@ export const SUBSCRIPTION_PLANS = {
     pro: {
         key: "pro",
         name: "Pro",
-        price: 29,
+        price: 19,
         priceId: "price_1SyqG69mcp2EBniBjqYnoCFL",
         quota: Infinity,
         features: ["Tous les avantages Starter", "Boutiques illimitées", "Marque blanche", "Support"],

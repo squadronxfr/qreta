@@ -44,15 +44,28 @@ export default function BillingPage() {
 
     const currentPlan = SUBSCRIPTION_PLANS[currentPlanKey];
     const CurrentIcon = PLAN_ICONS[currentPlanKey];
-    const statusInfo = STATUS_LABELS[userData?.subscription?.status || ""] || {
-        label: "Gratuit",
-        className: "bg-slate-100 text-slate-600"
+    const getStatusInfo = () => {
+        if (!userData?.subscription?.status || currentPlanKey === "free") {
+            return {label: "Gratuit", className: "bg-slate-100 text-slate-600"};
+        }
+
+        if (cancelAtPeriodEnd) {
+            return {label: "Se termine bientôt", className: "bg-orange-100 text-orange-700"};
+        }
+
+        return STATUS_LABELS[userData.subscription.status] || {
+            label: "Gratuit",
+            className: "bg-slate-100 text-slate-600"
+        };
     };
+
+    const statusInfo = getStatusInfo();
 
     const showSuccess = searchParams.get("success") === "true";
     const showCanceled = searchParams.get("canceled") === "true";
 
     const hasStripeAccount = !!userData?.subscription?.stripeCustomerId;
+
 
     return (
         <div className="container max-w-6xl mx-auto py-10 px-4">
@@ -84,10 +97,12 @@ export default function BillingPage() {
 
                     <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
                         <CardHeader
-                            className="bg-linear-to-r from-slate-50 to-indigo-50/30 border-b border-slate-100 pb-6">
+                            className="pb-6">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-sm text-slate-500 mb-1">Plan actuel</p>
+                                    <p className="text-sm text-slate-500 mb-1">
+                                        Plan actuel
+                                    </p>
                                     <CardTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                                         <CurrentIcon className="h-6 w-6 text-indigo-600"/>
                                         {currentPlan.name}
@@ -128,7 +143,7 @@ export default function BillingPage() {
                                         {isProcessing === "portal_top" ?
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin"/> :
                                             <ExternalLink className="mr-2 h-4 w-4"/>}
-                                        Gérer l&#39;abonnement
+                                        Gérer mon abonnement
                                     </Button>
                                 </div>
                             )}
@@ -199,7 +214,7 @@ export default function BillingPage() {
                                                     {isProcessing === key &&
                                                         <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                                     {isCurrent
-                                                        ? "Gérer mon offre"
+                                                        ? "Annuler l'abonnement"
                                                         : (isSubscribed ? "Changer vers ce plan" : `Choisir ${plan.name}`)}
                                                 </Button>
                                             </CardContent>

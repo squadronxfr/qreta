@@ -1,6 +1,6 @@
 "use client";
 
-import {createContext, useContext, useEffect, useState, ReactNode} from "react";
+import {createContext, use, useEffect, useState, ReactNode} from "react";
 import {
     onAuthStateChanged,
     signOut,
@@ -11,6 +11,7 @@ import {
 import {doc, onSnapshot} from "firebase/firestore";
 import {auth, db} from "@/lib/firebase/config";
 import {UserDoc} from "@/types/user";
+import {toast} from "sonner";
 
 interface AuthContextType {
     user: User | null;
@@ -28,13 +29,24 @@ export function AuthProvider({children}: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     const googleSignIn = async () => {
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
+        try {
+            const provider = new GoogleAuthProvider();
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            console.error("Erreur de connexion:", error);
+            toast.error("Impossible de se connecter avec Google.");
+        }
     };
 
     const logout = async () => {
-        await signOut(auth);
-        setUserData(null);
+        try {
+            await signOut(auth);
+            setUserData(null);
+            toast.success("Vous avez été déconnecté.");
+        } catch (error) {
+            console.error("Erreur de déconnexion:", error);
+            toast.error("Une erreur est survenue lors de la déconnexion.");
+        }
     };
 
     useEffect(() => {
@@ -64,6 +76,7 @@ export function AuthProvider({children}: { children: ReactNode }) {
             setLoading(false);
         }, (error) => {
             console.error("Erreur récupération profil:", error);
+            toast.error("Impossible de charger le profil utilisateur.");
             setLoading(false);
         });
 
@@ -78,7 +91,7 @@ export function AuthProvider({children}: { children: ReactNode }) {
 }
 
 export function useAuth() {
-    const context = useContext(AuthContext);
+    const context = use(AuthContext);
     if (!context) {
         throw new Error("useAuth must be used within an AuthProvider");
     }

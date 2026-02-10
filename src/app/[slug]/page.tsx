@@ -1,6 +1,5 @@
 import {notFound} from "next/navigation";
-import {db} from "@/lib/firebase/config";
-import {collection, query, where, getDocs, doc, getDoc} from "firebase/firestore";
+import {adminDb} from "@/lib/firebase/admin";
 import {PublicStoreView} from "@/components/store-front/public-view";
 import {Store, Category, Item} from "@/types/store";
 import {Metadata} from "next";
@@ -14,10 +13,10 @@ interface PageProps {
 
 export async function generateMetadata({params}: PageProps): Promise<Metadata> {
     const {slug} = await params;
-    const q = query(collection(db, "stores"), where("slug", "==", slug));
-    const snap = await getDocs(q);
-    if (snap.empty) return {title: "Boutique introuvable - Qreta"};
-    const store = snap.docs[0].data() as Store;
+    const storesQuery = adminDb.collection("stores").where("slug", "==", slug);
+    const storeSnap = await storesQuery.get();
+    if (storeSnap.empty) return {title: "Boutique introuvable - Qreta"};
+    const store = storeSnap.docs[0].data() as Store;
     return {
         title: `${store.name} | Catalogue`,
         description: store.description || `Découvrez le catalogue de ${store.name} sur Qreta.`,
@@ -32,8 +31,8 @@ export async function generateMetadata({params}: PageProps): Promise<Metadata> {
 export default async function PublicStorePage({params}: PageProps) {
     const {slug} = await params;
 
-    const qStore = query(collection(db, "stores"), where("slug", "==", slug));
-    const storeSnap = await getDocs(qStore);
+    const storesQuery = adminDb.collection("stores").where("slug", "==", slug);
+    const storeSnap = await storesQuery.get();
 
     if (storeSnap.empty) {
         notFound();
@@ -60,25 +59,26 @@ export default async function PublicStorePage({params}: PageProps) {
     let isPro = false;
     if (storeData.userId) {
         try {
-            const userDocRef = doc(db, "users", storeData.userId);
-            const userDocSnap = await getDoc(userDocRef);
-            if (userDocSnap.exists()) {
+            const userDocRef = adminDb.collection("users").doc(storeData.userId);
+            const userDocSnap = await userDocRef.get();
+            if (userDocSnap.exists) {
                 const userData = userDocSnap.data();
-                const plan = (userData.subscription?.plan as PlanKey) || "free";
+                const plan = (userData?.subscription?.plan as PlanKey) || "free";
                 isPro = plan === "pro";
             }
-        } catch (e) {
-            console.error("Erreur récupération user plan", e);
+        } catch (error) {
+            console.error("Erreur récupération user plan:", error);
+            // isPro reste false par défaut
         }
     }
 
-    const qCats = query(collection(db, "categories"), where("storeId", "==", storeDoc.id));
-    const catsSnapPromise = getDocs(qCats);
+    const categoriesQuery = adminDb.collection("categories").where("storeId", "==", storeDoc.id);
+    const itemsQuery = adminDb.collection("items").where("storeId", "==", storeDoc.id);
 
-    const qItems = query(collection(db, "items"), where("storeId", "==", storeDoc.id));
-    const itemsSnapPromise = getDocs(qItems);
-
-    const [catsSnap, itemsSnap] = await Promise.all([catsSnapPromise, itemsSnapPromise]);
+    const [catsSnap, itemsSnap] = await Promise.all([
+        categoriesQuery.get(),
+        itemsQuery.get()
+    ]);
 
     const categories = catsSnap.docs
         .map(d => ({id: d.id, ...d.data()} as Category))

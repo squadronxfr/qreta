@@ -32,6 +32,7 @@ import {
     Layers, ImageIcon
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import {cn} from "@/lib/utils";
 
 interface PageProps {
@@ -123,7 +124,13 @@ export default function StoreDashboardPage({params}: PageProps) {
                     <div
                         className="h-20 w-20 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0 overflow-hidden relative border-4 border-white">
                         {store.logoUrl ? (
-                            <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover"/>
+                            <Image
+                                src={store.logoUrl}
+                                alt={store.name}
+                                fill
+                                className="object-cover"
+                                sizes="80px"
+                            />
                         ) : (
                             <StoreIcon className="h-8 w-8 opacity-80"/>
                         )}
@@ -185,7 +192,7 @@ export default function StoreDashboardPage({params}: PageProps) {
                             <div className="flex items-center gap-2 w-full sm:w-auto">
                                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                                     <SelectTrigger
-                                        className="w-full sm:w-[180px] rounded-xl bg-slate-50 border-slate-200">
+                                        className="w-full sm:w-45 rounded-xl bg-slate-50 border-slate-200">
                                         <div className="flex items-center gap-2 truncate">
                                             <Layers className="h-3.5 w-3.5 text-slate-500"/>
                                             <SelectValue placeholder="Catégorie"/>
@@ -202,7 +209,7 @@ export default function StoreDashboardPage({params}: PageProps) {
                                 <Select value={statusFilter}
                                         onValueChange={(v: "all" | "active" | "inactive") => setStatusFilter(v)}>
                                     <SelectTrigger
-                                        className="w-full sm:w-[140px] rounded-xl bg-slate-50 border-slate-200">
+                                        className="w-full sm:w-35 rounded-xl bg-slate-50 border-slate-200">
                                         <div className="flex items-center gap-2">
                                             <Filter className="h-3.5 w-3.5 text-slate-500"/>
                                             <SelectValue placeholder="Statut"/>
@@ -277,8 +284,13 @@ export default function StoreDashboardPage({params}: PageProps) {
                                                         <div
                                                             className="h-24 w-24 shrink-0 rounded-xl bg-slate-100 overflow-hidden relative border border-slate-100">
                                                             {item.imageUrl ? (
-                                                                <img src={item.imageUrl} alt={item.name}
-                                                                     className="h-full w-full object-cover transition-transform group-hover:scale-105"/>
+                                                                <Image
+                                                                    src={item.imageUrl}
+                                                                    alt={item.name}
+                                                                    fill
+                                                                    className="object-cover transition-transform group-hover:scale-105"
+                                                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                                />
                                                             ) : (
                                                                 <div
                                                                     className="h-full w-full flex items-center justify-center text-slate-300">
