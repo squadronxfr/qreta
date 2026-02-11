@@ -1,8 +1,9 @@
 "use client";
 
-import {useEffect, ReactNode} from "react";
-import {useAuth} from "@/context/auth-context";
+import React, {useEffect, ReactNode, useState} from "react";
+import {useAuthStore} from "@/providers/auth-store-provider";
 import {useRouter} from "next/navigation";
+import {Progress} from "@/components/ui/progress";
 
 interface ProtectedRouteProps {
     children: ReactNode;
@@ -10,30 +11,56 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({children, requiredRole}: ProtectedRouteProps) => {
-    const {user, loading, userData} = useAuth();
+    const user = useAuthStore((s) => s.user);
+    const userData = useAuthStore((s) => s.userData);
+    const loading = useAuthStore((s) => s.loading);
     const router = useRouter();
 
-    useEffect(() => {
-        if (!loading) {
-            if (!user) {
-                router.push("/login");
-                return;
-            }
+    const [progress, setProgress] = useState(0);
 
-            if (requiredRole && userData?.role !== requiredRole) {
-                if (requiredRole === "superadmin") {
-                    router.push("/stores");
-                } else {
-                    router.push("/login");
-                }
+    useEffect(() => {
+        let interval: NodeJS.Timeout | null = null;
+
+        if (loading) {
+            setTimeout(() => setProgress(0), 0);
+            interval = setInterval(() => {
+                setProgress((oldProgress) => {
+                    if (oldProgress >= 90) {
+                        clearInterval(interval!);
+                        return oldProgress;
+                    }
+                    return Math.min(oldProgress + 5, 90);
+                });
+            }, 200);
+        } else {
+            setTimeout(() => setProgress(100), 0);
+        }
+
+        return () => {
+            if (interval) {
+                clearInterval(interval);
             }
+        };
+    }, [loading]);
+
+    useEffect(() => {
+        if (loading) return;
+
+        if (!user) {
+            router.push("/login");
+            return;
+        }
+
+        if (requiredRole && userData?.role !== requiredRole) {
+            router.push(requiredRole === "superadmin" ? "/stores" : "/login");
         }
     }, [user, loading, userData, router, requiredRole]);
 
     if (loading) {
         return (
-            <div className="flex h-screen items-center justify-center">
-                <p className="text-slate-500 animate-pulse">Chargement de Qreta...</p>
+            <div className="flex flex-col items-center justify-center h-screen gap-4">
+                <Progress value={progress} className="w-48" />
+                <p className="text-slate-500">Chargement de Qreta...</p>
             </div>
         );
     }

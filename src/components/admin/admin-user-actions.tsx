@@ -6,8 +6,9 @@ import {db} from "@/lib/firebase/config";
 import {doc, updateDoc} from "firebase/firestore";
 import {
     MoreHorizontal, User, ExternalLink, ShieldAlert,
-    CreditCard, Check, Loader2, Copy
+    CreditCard, Check, Copy
 } from "lucide-react";
+import {Spinner} from "@/components/ui/spinner";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {
@@ -227,7 +228,7 @@ export function AdminUserActions({user, onUpdate}: AdminUserActionsProps) {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowSubDialog(false)}>Annuler</Button>
                         <Button onClick={handleUpdateSubscription} disabled={loading}>
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                            {loading && <Spinner className="mr-2 h-4 w-4"/>}
                             Sauvegarder
                         </Button>
                     </DialogFooter>
@@ -254,7 +255,7 @@ export function AdminUserActions({user, onUpdate}: AdminUserActionsProps) {
                             onClick={handleToggleBlock}
                             disabled={loading}
                         >
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                            {loading && <Spinner className="mr-2 h-4 w-4"/>}
                             {user.isBlocked ? "Réactiver" : "Bloquer"}
                         </Button>
                     </DialogFooter>

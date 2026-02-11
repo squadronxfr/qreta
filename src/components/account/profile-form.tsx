@@ -1,7 +1,7 @@
 "use client";
 
 import {useState, SyntheticEvent, useRef, ChangeEvent, useEffect} from "react";
-import {useAuth} from "@/context/auth-context";
+import {useAuthStore} from "@/providers/auth-store-provider";
 import {useRouter} from "next/navigation";
 import {
     updateProfile,
@@ -22,9 +22,10 @@ import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {
-    Loader2, Save, User, Lock, Check,
+    Save, User, Lock, Check,
     Camera, Trash2, Mail, Sparkles, AlertCircle, AlertTriangle, ArrowUpCircle, ExternalLink
 } from "lucide-react";
+import {Spinner} from "@/components/ui/spinner";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -36,9 +37,12 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {toast} from "sonner";
 
 export function ProfileForm() {
-    const {user, logout, userData} = useAuth();
+    const user = useAuthStore((s) => s.user);
+    const userData = useAuthStore((s) => s.userData);
+    const logout = useAuthStore((s) => s.logout);
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -77,8 +81,14 @@ export function ProfileForm() {
                 }
             }
         };
-        fetchUserDoc();
+        void fetchUserDoc();
     }, [user]);
+
+    useEffect(() => {
+        if (success) {
+            toast.success("Profil mis à jour avec succès.");
+        }
+    }, [success]);
 
     const getInitials = () => {
         const f = firstname ? firstname[0].toUpperCase() : "";
@@ -107,7 +117,6 @@ export function ProfileForm() {
     const handlePortal = async (targetPriceId?: string | null) => {
         if (!user) return;
 
-        // Si l'utilisateur n'a pas de client Stripe (plan free), on le redirige vers Billing
         if (!userData?.subscription?.stripeCustomerId) {
             router.push("/billing");
             return;
@@ -321,7 +330,7 @@ export function ProfileForm() {
                                 disabled={!!loadingAction}
                             >
                                 {loadingAction === "portal" ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                    <Spinner className="mr-2 h-4 w-4 animate-spin"/>
                                 ) : (
                                     <ExternalLink className="mr-2 h-4 w-4"/>
                                 )}
@@ -339,7 +348,7 @@ export function ProfileForm() {
                                     disabled={!!loadingAction}
                                 >
                                     {loadingAction === "portal_upgrade" ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                        <Spinner className="mr-2 h-4 w-4 animate-spin"/>
                                     ) : (
                                         <ArrowUpCircle className="mr-2 h-4 w-4"/>
                                     )}
@@ -452,11 +461,19 @@ export function ProfileForm() {
                             <Button
                                 type="submit"
                                 disabled={loading}
-                                className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100 shadow-md px-6"
+                                className={`rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100 shadow-md px-6 ${
+                                    success
+                                        ? "bg-green-600 hover:bg-green-700 shadow-green-200 text-white"
+                                        : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 text-white"
+                                }`}
                             >
-                                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> :
-                                    <Save className="mr-2 h-4 w-4"/>}
-                                Enregistrer les modifications
+                                {loading ? (
+                                    <><Spinner className="mr-2 h-4 w-4"/> Sauvegarde en cours...</>
+                                ) : success ? (
+                                    <><Check className="mr-2 h-4 w-4"/> Enregistré avec succès !</>
+                                ) : (
+                                    <><Save className="mr-2 h-4 w-4"/> Enregistrer les modifications</>
+                                )}
                             </Button>
                         </CardFooter>
                     </Card>
@@ -466,14 +483,6 @@ export function ProfileForm() {
                             <AlertCircle className="h-4 w-4"/>
                             <AlertTitle>Erreur</AlertTitle>
                             <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    )}
-
-                    {success && (
-                        <Alert className="bg-green-50 border-green-100 text-green-800 rounded-xl">
-                            <Check className="h-4 w-4 text-green-600"/>
-                            <AlertTitle>Succès</AlertTitle>
-                            <AlertDescription>Profil mis à jour avec succès.</AlertDescription>
                         </Alert>
                     )}
                 </form>

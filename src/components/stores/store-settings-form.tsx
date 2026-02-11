@@ -1,9 +1,9 @@
 "use client";
 
-import {useState, SyntheticEvent, ChangeEvent, useRef, useEffect} from "react";
+import {useState, SyntheticEvent, ChangeEvent, useRef, useEffect, MouseEvent} from "react";
 import {useRouter} from "next/navigation";
 import {db, storage} from "@/lib/firebase/config";
-import {doc, updateDoc, deleteDoc, collection, query, where, getDocs} from "firebase/firestore";
+import {doc, updateDoc, deleteDoc} from "firebase/firestore";
 import {ref, uploadBytes, getDownloadURL, deleteObject} from "firebase/storage";
 import {Store} from "@/types/store";
 import {Button} from "@/components/ui/button";
@@ -13,11 +13,13 @@ import {Textarea} from "@/components/ui/textarea";
 import {Switch} from "@/components/ui/switch";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Separator} from "@/components/ui/separator";
+import {generateSlug, checkSlugAvailability} from "@/lib/utils/slug";
 import {
-    Loader2, Save, Upload, Image as ImageIcon, Download,
+    Save, Upload, Image as ImageIcon, Download,
     QrCode, Check, Copy, X, ExternalLink, MapPin,
     Phone, Instagram, Globe, Link as LinkIcon, AlertTriangle, Trash2
 } from "lucide-react";
+import {Spinner} from "@/components/ui/spinner";
 import QRCode from "react-qr-code";
 import {
     AlertDialog,
@@ -30,6 +32,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {toast} from "sonner";
 
 interface StoreSettingsFormProps {
     store: Store;
@@ -91,39 +94,6 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
     const qrRef = useRef<HTMLDivElement>(null);
 
 
-    const generateSlug = (text: string) => {
-        return text
-            .toLowerCase()
-            .trim()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^a-z0-9\s-]/g, '')
-            .replace(/\s+/g, '-');
-    };
-
-    const checkSlugAvailability = async (baseSlug: string) => {
-        let uniqueSlug = baseSlug;
-        let counter = 1;
-        let isUnique = false;
-
-        while (!isUnique) {
-            const q = query(
-                collection(db, "stores"),
-                where("slug", "==", uniqueSlug)
-            );
-            const snapshot = await getDocs(q);
-
-            const existingDoc = snapshot.docs[0];
-            if (snapshot.empty || (existingDoc && existingDoc.id === store.id)) {
-                isUnique = true;
-            } else {
-                uniqueSlug = `${baseSlug}-${counter}`;
-                counter++;
-            }
-        }
-        return uniqueSlug;
-    };
-
     const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
         const newName = e.target.value;
 
@@ -136,7 +106,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
             debounceRef.current = setTimeout(async () => {
                 const baseSlug = generateSlug(newName);
                 if (baseSlug) {
-                    const finalSlug = await checkSlugAvailability(baseSlug);
+                    const finalSlug = await checkSlugAvailability(baseSlug, store.id);
                     setFormData(prev => ({...prev, slug: finalSlug}));
                 }
             }, 500);
@@ -172,7 +142,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
         }
     };
 
-    const removeLogo = (e: React.MouseEvent) => {
+    const removeLogo = (e: MouseEvent) => {
         e.stopPropagation();
         setLogoFile(null);
         setLogoPreview(undefined);
@@ -181,7 +151,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
         setSuccess(false);
     };
 
-    const removeBanner = (e: React.MouseEvent) => {
+    const removeBanner = (e: MouseEvent) => {
         e.stopPropagation();
         setBannerFile(null);
         setBannerPreview(undefined);
@@ -293,6 +263,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
             setBannerFile(null);
             setShouldRemoveLogo(false);
             setShouldRemoveBanner(false);
+            toast.success("Les paramètres de la boutique ont été mis à jour avec succès !");
             setSuccess(true);
 
             setTimeout(() => setSuccess(false), 2000);
@@ -490,7 +461,6 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                         </CardContent>
                     </Card>
 
-                    {/* Bouton Sauvegarder (Reste avec le formulaire principal) */}
                     <div className="flex justify-end pt-4">
                         <Button
                             type="submit"
@@ -502,7 +472,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                             }`}
                         >
                             {loading ? (
-                                <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Sauvegarde en cours...</>
+                                <><Spinner className="mr-2 h-4 w-4"/> Sauvegarde en cours...</>
                             ) : success ? (
                                 <><Check className="mr-2 h-4 w-4"/> Enregistré avec succès !</>
                             ) : (
@@ -512,7 +482,6 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                     </div>
                 </div>
 
-                {/* --- BLOC 2 : SIDEBAR (Reste à droite sur Desktop, 2ème sur Mobile) --- */}
                 <div className="lg:col-span-4 space-y-6">
                     <Card className="border-indigo-100 bg-indigo-50/50 shadow-sm rounded-2xl sticky top-24">
                         {/* ... Contenu Accès Rapide (inchangé) ... */}
@@ -616,8 +585,13 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                                         <AlertDialogFooter>
                                             <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
                                             <AlertDialogAction onClick={handleDeleteStore}
-                                                               className="bg-red-600 hover:bg-red-700 rounded-xl">
-                                                Oui, supprimer
+                                                               className="bg-red-600 hover:bg-red-700 rounded-xl"
+                                                               disabled={loading}>
+                                                {loading ? (
+                                                    <><Spinner className="mr-2 h-4 w-4"/> Suppression...</>
+                                                ) : (
+                                                    "Oui, supprimer"
+                                                )}
                                             </AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>

@@ -4,14 +4,17 @@ import {useSearchParams} from "next/navigation";
 import {useBilling} from "@/hooks/use-billing";
 import {SUBSCRIPTION_PLANS, PlanKey} from "@/config/subscription";
 import {
-    CreditCard, Shield, Loader2, Check, ExternalLink,
+    CreditCard, Shield, Check, ExternalLink,
     Sparkles, AlertCircle, Zap, Crown, Download, History
 } from "lucide-react";
+import {Spinner} from "@/components/ui/spinner";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {cn} from "@/lib/utils";
+import {toast} from "sonner";
+import {useEffect} from "react";
 
 const PLAN_ICONS = {
     free: Zap,
@@ -64,6 +67,12 @@ export default function BillingPage() {
     const showSuccess = searchParams.get("success") === "true";
     const showCanceled = searchParams.get("canceled") === "true";
 
+    useEffect(() => {
+        if (showSuccess) {
+            toast.success("Paiement réussi ! Votre abonnement est actif.");
+        }
+    }, [showSuccess]);
+
     const hasStripeAccount = !!userData?.subscription?.stripeCustomerId;
 
 
@@ -75,15 +84,6 @@ export default function BillingPage() {
                 </h1>
                 <p className="text-slate-500">Gérez votre abonnement et vos informations de paiement.</p>
             </div>
-
-            {showSuccess && (
-                <Alert className="mb-6 bg-green-50 border-green-200 text-green-800 rounded-2xl">
-                    <Check className="h-4 w-4 text-green-600"/>
-                    <AlertDescription className="font-medium">
-                        Paiement réussi ! Votre abonnement est actif.
-                    </AlertDescription>
-                </Alert>
-            )}
 
             {showCanceled && (
                 <Alert className="mb-6 bg-orange-50 border-orange-200 text-orange-800 rounded-2xl">
@@ -141,9 +141,8 @@ export default function BillingPage() {
                                         className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl"
                                     >
                                         {isProcessing === "portal_top" ?
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin"/> :
-                                            <ExternalLink className="mr-2 h-4 w-4"/>}
-                                        Gérer mon abonnement
+                                            <Spinner className="mr-2 h-4 w-4"/> :
+                                            <ExternalLink className="mr-2 h-4 w-4"/>} Gérer mon abonnement
                                     </Button>
                                 </div>
                             )}
@@ -212,7 +211,7 @@ export default function BillingPage() {
                                                     )}
                                                 >
                                                     {isProcessing === key &&
-                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                                        <Spinner className="mr-2 h-4 w-4"/>}
                                                     {isCurrent
                                                         ? "Annuler l'abonnement"
                                                         : (isSubscribed ? "Changer vers ce plan" : `Choisir ${plan.name}`)}
@@ -243,8 +242,8 @@ export default function BillingPage() {
                                     <tbody className="divide-y divide-slate-100">
                                     {isLoadingInvoices ? (
                                         <tr>
-                                            <td colSpan={4} className="p-6 text-center"><Loader2
-                                                className="h-5 w-5 animate-spin mx-auto"/></td>
+                                            <td colSpan={4} className="p-6 text-center"><Spinner
+                                                className="h-5 w-5 mx-auto"/></td>
                                         </tr>
                                     ) : invoices.length === 0 ? (
                                         <tr>

@@ -10,7 +10,8 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter} from "@/components/ui/card";
 import {Alert, AlertDescription} from "@/components/ui/alert";
-import {Loader2, ArrowRight, CheckCircle2} from "lucide-react";
+import {ArrowRight, CheckCircle2} from "lucide-react";
+import {Spinner} from "@/components/ui/spinner";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 
@@ -151,7 +152,7 @@ export default function SignupPage() {
                                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium h-11 rounded-xl"
                                 disabled={isLoading}>
                             {isLoading ? (
-                                <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Création en cours...</>
+                                <><Spinner className="mr-2 h-4 w-4"/> Création en cours...</>
                             ) : (
                                 <>S&#39;inscrire <ArrowRight className="ml-2 h-4 w-4"/></>
                             )}

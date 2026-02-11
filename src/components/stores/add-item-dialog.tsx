@@ -1,9 +1,7 @@
 "use client";
 
 import {useState, SyntheticEvent, ChangeEvent, useRef} from "react";
-import {db, storage} from "@/lib/firebase/config";
-import {collection, addDoc, serverTimestamp} from "firebase/firestore";
-import {ref, uploadBytes, getDownloadURL} from "firebase/storage";
+import {createItem} from "@/lib/firebase/items";
 import {
     Dialog,
     DialogContent,
@@ -23,7 +21,8 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Textarea} from "@/components/ui/textarea";
 import {Checkbox} from "@/components/ui/checkbox";
-import {Plus, ImageIcon, Loader2} from "lucide-react";
+import {Plus, ImageIcon} from "lucide-react";
+import {Spinner} from "@/components/ui/spinner";
 import {Category} from "@/types/store";
 
 interface AddItemDialogProps {
@@ -59,26 +58,19 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
 
         setLoading(true);
         try {
-            let imageUrl = "";
-
-            if (imageFile) {
-                const fileExt = imageFile.name.split('.').pop();
-                const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-                const storageRef = ref(storage, `stores/${storeId}/items/${fileName}`);
-
-                const snapshot = await uploadBytes(storageRef, imageFile);
-                imageUrl = await getDownloadURL(snapshot.ref);
-            }
-
-            await addDoc(collection(db, "items"), {
-                ...formData,
-                price: parseFloat(formData.price) || 0,
-                imageUrl,
-                storeId,
-                isActive: true,
-                order: Date.now(),
-                createdAt: serverTimestamp()
-            });
+            await createItem(
+                {
+                    storeId,
+                    categoryId: formData.categoryId,
+                    name: formData.name,
+                    description: formData.description,
+                    price: parseFloat(formData.price) || 0,
+                    type: formData.type,
+                    isStartingPrice: formData.isStartingPrice,
+                    duration: formData.duration || undefined,
+                },
+                imageFile
+            );
 
             setFormData({
                 name: "",
@@ -87,9 +79,8 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
                 categoryId: "",
                 type: "service",
                 isStartingPrice: false,
-                duration: ""
+                duration: "",
             });
-
             setImageFile(null);
             if (fileInputRef.current) fileInputRef.current.value = "";
             setOpen(false);
@@ -172,7 +163,8 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
                                     isStartingPrice: checked === true
                                 })}
                             />
-                            <label htmlFor="is-starting-price" className="text-xs font-medium cursor-pointer">Prix &quot;À
+                            <label htmlFor="is-starting-price"
+                                   className="text-xs font-medium cursor-pointer">Prix &quot;À
                                 partir de&quot;</label>
                         </div>
                     </div>
@@ -217,8 +209,8 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
                     </div>
 
                     <Button type="submit" className="w-full bg-indigo-600 rounded-xl h-12 font-bold" disabled={loading}>
-                        {loading ? <><Loader2
-                            className="mr-2 h-4 w-4 animate-spin"/> Traitement...</> : "Enregistrer l'article"}
+                        {loading ? <><Spinner
+                            className="mr-2 h-4 w-4"/> Traitement...</> : "Enregistrer l'article"}
                     </Button>
                 </form>
             </DialogContent>

@@ -1,11 +1,9 @@
 "use client";
 
 import React, {useState, useRef, useEffect, ChangeEvent} from "react";
-import {db, storage} from "@/lib/firebase/config";
-import {doc, updateDoc} from "firebase/firestore";
-import {ref, uploadBytes, getDownloadURL, deleteObject} from "firebase/storage";
+import {updateItem} from "@/lib/firebase/items";
 import {Item, Category} from "@/types/store";
-import {useAuth} from "@/context/auth-context";
+import {useAuthStore} from "@/providers/auth-store-provider";
 import {PlanKey} from "@/config/subscription";
 import {
     Dialog,
@@ -33,7 +31,8 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {Loader2, ImageIcon, X, Lock} from "lucide-react";
+import {ImageIcon, X, Lock} from "lucide-react";
+import {Spinner} from "@/components/ui/spinner";
 import {toast} from "sonner";
 
 interface EditItemDialogProps {
@@ -44,7 +43,7 @@ interface EditItemDialogProps {
 }
 
 export function EditItemDialog({item, categories, open, onOpenChange}: EditItemDialogProps) {
-    const {userData} = useAuth();
+    const userData = useAuthStore((s) => s.userData);
     const [loading, setLoading] = useState<boolean>(false);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -99,53 +98,30 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
-    const isFirebaseStorageUrl = (url: string) => {
-        return url.includes("firebasestorage.googleapis.com");
-    };
 
-    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.SyntheticEvent) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            let finalImageUrl = previewUrl;
 
-            if (imageFile) {
-                const fileExt = imageFile.name.split('.').pop();
-                const fileName = `stores/${item.storeId}/items/${Date.now()}.${fileExt}`;
-                const storageRef = ref(storage, fileName);
-                const snapshot = await uploadBytes(storageRef, imageFile);
-                finalImageUrl = await getDownloadURL(snapshot.ref);
-
-                if (item.imageUrl && isFirebaseStorageUrl(item.imageUrl)) {
-                    const oldImageRef = ref(storage, item.imageUrl);
-                    await deleteObject(oldImageRef).catch(() => null);
-                }
-            } else if (!previewUrl && item.imageUrl) {
-                if (isFirebaseStorageUrl(item.imageUrl)) {
-                    const oldImageRef = ref(storage, item.imageUrl);
-                    await deleteObject(oldImageRef).catch(() => null);
-                }
-                finalImageUrl = "";
-            }
-
-            const itemRef = doc(db, "items", item.id);
-
-            const finalIsActive = canManageAvailability ? formData.isActive : true;
-
-            await updateDoc(itemRef, {
-                name: formData.name,
-                description: formData.description,
-                categoryId: formData.categoryId,
-                type: formData.type,
-                isStartingPrice: formData.isStartingPrice,
-                duration: formData.duration,
-
-                isActive: finalIsActive,
-                price: parseFloat(formData.price) || 0,
-                imageUrl: finalImageUrl || "",
-                updatedAt: new Date(),
-            });
+            await updateItem(
+                item.id,
+                item.storeId,
+                {
+                    name: formData.name,
+                    description: formData.description,
+                    price: parseFloat(formData.price) || 0,
+                    categoryId: formData.categoryId,
+                    type: formData.type,
+                    isStartingPrice: formData.isStartingPrice,
+                    duration: formData.duration || undefined,
+                    isActive: formData.isActive,
+                    imageUrl: item.imageUrl,
+                },
+                imageFile,
+                !previewUrl && !!item.imageUrl
+            );
 
             toast.success("Produit mis à jour");
             onOpenChange(false);
@@ -243,7 +219,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
 
                         {canManageAvailability ? (
                             <Switch
-                                checked={formData.isActive} // CORRECTION : available -> isActive
+                                checked={formData.isActive}
                                 onCheckedChange={(checked) => setFormData({...formData, isActive: checked})}
                             />
                         ) : (
@@ -303,7 +279,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                     </div>
 
                     <Button type="submit" className="w-full bg-indigo-600 rounded-xl h-12 font-bold" disabled={loading}>
-                        {loading ? <Loader2 className="h-4 w-4 animate-spin"/> : "Enregistrer les modifications"}
+                        {loading ? <Spinner className="h-4 w-4"/> : "Enregistrer les modifications"}
                     </Button>
                 </form>
             </DialogContent>

@@ -1,7 +1,7 @@
 "use client";
 
 import {useEffect, useState, useCallback} from "react";
-import {useAuth} from "@/context/auth-context";
+import {useAuthStore} from "@/providers/auth-store-provider";
 import {useRouter} from "next/navigation";
 import {db} from "@/lib/firebase/config";
 import {collection, getDocs, query, orderBy} from "firebase/firestore";
@@ -17,6 +17,7 @@ import {Button} from "@/components/ui/button";
 import {
     Search, Shield, Store as StoreIcon, ArrowRight, AlertTriangle
 } from "lucide-react";
+import {Spinner} from "@/components/ui/spinner";
 import Link from "next/link";
 import {AdminUserActions} from "@/components/admin/admin-user-actions";
 
@@ -25,7 +26,8 @@ interface AdminUserView extends UserDoc {
 }
 
 export default function SuperAdminPage() {
-    const {userData, loading} = useAuth();
+    const userData = useAuthStore((s) => s.userData);
+    const loading = useAuthStore((s) => s.loading);
     const router = useRouter();
     const [users, setUsers] = useState<AdminUserView[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -66,7 +68,7 @@ export default function SuperAdminPage() {
     if (loading || isLoadingData) return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50">
             <div className="flex flex-col items-center gap-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <Spinner className="h-8 w-8 text-indigo-600"/>
                 <p className="text-sm text-slate-500 font-medium">Chargement du panneau Admin...</p>
             </div>
         </div>

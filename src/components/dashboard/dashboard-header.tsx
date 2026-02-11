@@ -1,6 +1,6 @@
 "use client";
 
-import {useAuth} from "@/context/auth-context";
+import {useAuthStore} from "@/providers/auth-store-provider";
 import {auth} from "@/lib/firebase/config";
 import {signOut} from "firebase/auth";
 import {useRouter} from "next/navigation";
@@ -18,7 +18,8 @@ import {Button} from "@/components/ui/button";
 import {LogOut, User, LayoutDashboard, CreditCard, ShieldCheck} from "lucide-react";
 
 export function DashboardHeader() {
-    const {user, userData} = useAuth();
+    const user = useAuthStore((s) => s.user);
+    const userData = useAuthStore((s) => s.userData);
     const router = useRouter();
 
     const handleLogout = async () => {
@@ -99,12 +100,6 @@ export function DashboardHeader() {
                                     Facturation
                                 </Link>
                             </DropdownMenuItem>
-
-                            {/* Optionnel : Paramètres globaux */}
-                            {/* <DropdownMenuItem className="cursor-pointer flex items-center w-full">
-                                <Settings className="mr-2 h-4 w-4"/>
-                                Paramètres
-                            </DropdownMenuItem> */}
 
                             <DropdownMenuSeparator/>
 

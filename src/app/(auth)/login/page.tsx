@@ -10,7 +10,8 @@ import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
 import {Alert, AlertDescription} from "@/components/ui/alert";
-import {Loader2, ArrowRight} from "lucide-react";
+import {ArrowRight} from "lucide-react";
+import {Spinner} from "@/components/ui/spinner";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -108,7 +109,7 @@ export default function LoginPage() {
                             disabled={isLoading}
                         >
                             {isLoading ? (
-                                <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Connexion en cours...</>
+                                <><Spinner className="mr-2 h-4 w-4"/> Connexion en cours...</>
                             ) : (
                                 <>Se connecter <ArrowRight className="ml-2 h-4 w-4"/></>
                             )}

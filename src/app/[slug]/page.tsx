@@ -5,8 +5,6 @@ import {Store, Category, Item} from "@/types/store";
 import {Metadata} from "next";
 import {PlanKey} from "@/config/subscription";
 
-export const dynamic = 'force-dynamic';
-
 interface PageProps {
     params: Promise<{ slug: string }>;
 }
@@ -68,7 +66,6 @@ export default async function PublicStorePage({params}: PageProps) {
             }
         } catch (error) {
             console.error("Erreur récupération user plan:", error);
-            // isPro reste false par défaut
         }
     }
 

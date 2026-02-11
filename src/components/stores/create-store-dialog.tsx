@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useState} from "react";
-import {useAuth} from "@/context/auth-context";
+import {useAuthStore} from "@/providers/auth-store-provider";
 import {createStore} from "@/lib/firebase/store";
 import {Button} from "@/components/ui/button";
 import {
@@ -16,7 +16,8 @@ import {
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Textarea} from "@/components/ui/textarea";
-import {Loader2, Plus, Store as StoreIcon, Lock} from "lucide-react";
+import {Plus, Store as StoreIcon, Lock} from "lucide-react";
+import {Spinner} from "@/components/ui/spinner";
 import {useRouter} from "next/navigation";
 import {SUBSCRIPTION_PLANS, PlanKey} from "@/config/subscription";
 import Link from "next/link";
@@ -27,7 +28,8 @@ interface CreateStoreDialogProps {
 }
 
 export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
-    const {user, userData} = useAuth();
+    const user = useAuthStore((s) => s.user);
+    const userData = useAuthStore((s) => s.userData);
     const router = useRouter();
 
     const [open, setOpen] = useState(false);
@@ -164,7 +166,7 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
                             disabled={loading || !name}
                             className="rounded-xl w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white"
                         >
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                            {loading && <Spinner className="mr-2 h-4 w-4"/>}
                             Créer la boutique
                         </Button>
                     </DialogFooter>

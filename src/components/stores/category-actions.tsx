@@ -1,40 +1,29 @@
 "use client";
 
 import {useState, SyntheticEvent, ChangeEvent} from "react";
-import {db} from "@/lib/firebase/config";
-import {doc, updateDoc, deleteDoc} from "firebase/firestore";
+import {updateCategory, deleteCategory} from "@/lib/firebase/categories";
 import {Category} from "@/types/store";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
-import {Loader2} from "lucide-react";
+import {Spinner} from "@/components/ui/spinner";
 
 interface CategoryActionsProps {
     category: Category;
 }
 
 export function CategoryActions({category}: CategoryActionsProps) {
-    const [openEdit, setOpenEdit] = useState<boolean>(false);
-    const [openDelete, setOpenDelete] = useState<boolean>(false);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [newName, setNewName] = useState<string>(category.name);
+    const [openEdit, setOpenEdit] = useState(false);
+    const [openDelete, setOpenDelete] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [newName, setNewName] = useState(category.name);
 
     const handleUpdate = async (e: SyntheticEvent) => {
         e.preventDefault();
@@ -42,12 +31,10 @@ export function CategoryActions({category}: CategoryActionsProps) {
 
         setLoading(true);
         try {
-            await updateDoc(doc(db, "categories", category.id), {
-                name: newName.trim(),
-            });
+            await updateCategory(category.id, {name: newName.trim()});
             setOpenEdit(false);
-        } catch (error: unknown) {
-            console.error(error);
+        } catch {
+            console.error("Impossible de mettre à jour la categorie")
         } finally {
             setLoading(false);
         }
@@ -56,10 +43,10 @@ export function CategoryActions({category}: CategoryActionsProps) {
     const handleDelete = async () => {
         setLoading(true);
         try {
-            await deleteDoc(doc(db, "categories", category.id));
+            await deleteCategory(category.id);
             setOpenDelete(false);
-        } catch (error: unknown) {
-            console.error(error);
+        } catch {
+            // noop
         } finally {
             setLoading(false);
         }
@@ -90,7 +77,7 @@ export function CategoryActions({category}: CategoryActionsProps) {
                             />
                         </div>
                         <Button type="submit" className="w-full bg-indigo-600 rounded-xl" disabled={loading}>
-                            {loading ? <Loader2 className="h-4 w-4 animate-spin"/> : "Mettre à jour"}
+                            {loading ? <Spinner className="h-4 w-4"/> : "Mettre à jour"}
                         </Button>
                     </form>
                 </DialogContent>
@@ -110,8 +97,8 @@ export function CategoryActions({category}: CategoryActionsProps) {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Supprimer la catégorie ?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Cela supprimera la section &quot;{category.name}&quot;. Les articles liés à cette catégorie ne seront
-                            plus visibles dans le catalogue.
+                            Cela supprimera la section &quot;{category.name}&quot;. Les articles liés à cette catégorie
+                            ne seront plus visibles dans le catalogue.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -119,12 +106,12 @@ export function CategoryActions({category}: CategoryActionsProps) {
                         <AlertDialogAction
                             onClick={(e) => {
                                 e.preventDefault();
-                                handleDelete();
+                                void handleDelete();
                             }}
                             className="bg-red-600 hover:bg-red-700 rounded-xl cursor-pointer"
                             disabled={loading}
                         >
-                            {loading ? <Loader2 className="h-4 w-4 animate-spin"/> : "Supprimer"}
+                            {loading ? <Spinner className="h-4 w-4"/> : "Supprimer"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

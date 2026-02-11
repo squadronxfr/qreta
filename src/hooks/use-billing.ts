@@ -1,7 +1,7 @@
 "use client";
 
 import {useState, useEffect} from "react";
-import {useAuth} from "@/context/auth-context";
+import {useAuthStore} from "@/providers/auth-store-provider";
 import {SUBSCRIPTION_PLANS, PlanKey} from "@/config/subscription";
 import {toast} from "sonner";
 
@@ -15,7 +15,8 @@ export interface Invoice {
 }
 
 export function useBilling() {
-    const {user, userData} = useAuth();
+    const user = useAuthStore((s) => s.user);
+    const userData = useAuthStore((s) => s.userData);
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
     const [isProcessing, setIsProcessing] = useState<string | null>(null);

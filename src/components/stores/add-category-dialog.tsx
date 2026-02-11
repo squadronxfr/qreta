@@ -1,8 +1,7 @@
 "use client";
 
 import {useState, SyntheticEvent, ChangeEvent} from "react";
-import {db} from "@/lib/firebase/config";
-import {collection, addDoc} from "firebase/firestore";
+import {createCategory} from "@/lib/firebase/categories";
 import {
     Dialog,
     DialogContent,
@@ -14,11 +13,12 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Plus} from "lucide-react";
+import {Spinner} from "../ui/spinner";
 
 export function AddCategoryDialog({storeId}: { storeId: string }) {
-    const [name, setName] = useState<string>("");
-    const [loading, setLoading] = useState<boolean>(false);
-    const [open, setOpen] = useState<boolean>(false);
+    const [name, setName] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [open, setOpen] = useState(false);
 
     const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -26,16 +26,11 @@ export function AddCategoryDialog({storeId}: { storeId: string }) {
 
         setLoading(true);
         try {
-            await addDoc(collection(db, "categories"), {
-                name: name.trim(),
-                storeId,
-                order: Date.now(),
-                isActive: true,
-            });
+            await createCategory(storeId, name);
             setName("");
             setOpen(false);
-        } catch (error: unknown) {
-            console.error(error);
+        } catch {
+            console.error("Erreur lors de la création de la catégorie");
         } finally {
             setLoading(false);
         }
@@ -65,7 +60,14 @@ export function AddCategoryDialog({storeId}: { storeId: string }) {
                         />
                     </div>
                     <Button type="submit" className="w-full bg-indigo-600" disabled={loading}>
-                        {loading ? "Chargement..." : "Créer la catégorie"}
+                        {loading ? (
+                            <>
+                                <Spinner className="mr-2 h-4 w-4"/>
+                                Chargement...
+                            </>
+                        ) : (
+                            "Créer la catégorie"
+                        )}
                     </Button>
                 </form>
             </DialogContent>

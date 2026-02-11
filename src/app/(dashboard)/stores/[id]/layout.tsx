@@ -1,13 +1,20 @@
-import {ProtectedStore} from "@/components/dashboard/protected-store";
 import {ReactNode} from "react";
+import {ProtectedStore} from "@/components/dashboard/protected-store";
+import {CatalogStoreProvider} from "@/providers/catalog-store-provider";
 
-export default function StoreDashboardLayout({children}:
-                                             {
-                                                 children: ReactNode;
-                                             }) {
+interface LayoutProps {
+    params: Promise<{ id: string }>;
+    children: ReactNode;
+}
+
+export default async function StoreDashboardLayout({params, children}: LayoutProps) {
+    const {id} = await params;
+
     return (
         <ProtectedStore>
-            {children}
+            <CatalogStoreProvider storeId={id}>
+                {children}
+            </CatalogStoreProvider>
         </ProtectedStore>
     );
 }

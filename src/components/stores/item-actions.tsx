@@ -1,25 +1,14 @@
 "use client";
 
 import {useState} from "react";
-import {db, storage} from "@/lib/firebase/config";
-import {doc, deleteDoc} from "firebase/firestore";
-import {ref, deleteObject} from "firebase/storage";
+import {deleteItem} from "@/lib/firebase/items";
 import {Item} from "@/types/store";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {Button} from "@/components/ui/button";
 import {MoreHorizontal, Pencil, Trash2, Loader2} from "lucide-react";
@@ -30,19 +19,15 @@ interface ItemActionsProps {
 }
 
 export function ItemActions({item, onEdit}: ItemActionsProps) {
-    const [showDelete, setShowDelete] = useState<boolean>(false);
-    const [isDeleting, setIsDeleting] = useState<boolean>(false);
+    const [showDelete, setShowDelete] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDelete = async () => {
         setIsDeleting(true);
         try {
-            if (item.imageUrl) {
-                const imageRef = ref(storage, item.imageUrl);
-                await deleteObject(imageRef).catch(() => null);
-            }
-            await deleteDoc(doc(db, "items", item.id));
-        } catch (error) {
-            console.error(error);
+            await deleteItem({id: item.id, imageUrl: item.imageUrl});
+        } catch {
+            console.error(`Impossible de supprimer ${item.id}`)
         } finally {
             setIsDeleting(false);
             setShowDelete(false);
@@ -87,9 +72,7 @@ export function ItemActions({item, onEdit}: ItemActionsProps) {
                 <AlertDialogContent className="rounded-2xl">
                     <AlertDialogHeader>
                         <AlertDialogTitle>Supprimer l&apos;article ?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Cette action est définitive.
-                        </AlertDialogDescription>
+                        <AlertDialogDescription>Cette action est définitive.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel className="rounded-xl cursor-pointer">Annuler</AlertDialogCancel>
