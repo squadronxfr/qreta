@@ -22,7 +22,7 @@ interface CreateItemData {
     price: number;
     type: "product" | "service";
     isStartingPrice: boolean;
-    duration?: string;
+    duration?: number | null;
 }
 
 export const createItem = async (
@@ -36,14 +36,19 @@ export const createItem = async (
         const path = `items/${data.storeId}/${Date.now()}.${ext}`;
         imageUrl = await uploadFile(path, imageFile);
     }
-
-    const docRef = await addDoc(collection(db, "items"), {
+    const itemData = {
         ...data,
         imageUrl,
         order: Date.now(),
         isActive: true,
         createdAt: serverTimestamp(),
-    });
+    };
+
+    if (itemData.duration === undefined) {
+        itemData.duration = null;
+    }
+
+    const docRef = await addDoc(collection(db, "items"), itemData);
 
     return docRef.id;
 };
