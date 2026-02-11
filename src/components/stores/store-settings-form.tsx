@@ -484,7 +484,6 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
 
                 <div className="lg:col-span-4 space-y-6">
                     <Card className="border-indigo-100 bg-indigo-50/50 shadow-sm rounded-2xl sticky top-24">
-                        {/* ... Contenu Accès Rapide (inchangé) ... */}
                         <CardHeader className="pb-2">
                             <CardTitle className="text-lg font-heading text-indigo-950 flex items-center gap-2">
                                 <QrCode className="h-5 w-5 text-indigo-600"/> Accès Rapide

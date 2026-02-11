@@ -2,6 +2,7 @@
 
 import {useState, SyntheticEvent, useRef, ChangeEvent, useEffect} from "react";
 import {useAuthStore} from "@/providers/auth-store-provider";
+import {useBilling} from "@/hooks/use-billing";
 import {useRouter} from "next/navigation";
 import {
     updateProfile,
@@ -10,20 +11,20 @@ import {
     EmailAuthProvider,
     reauthenticateWithCredential
 } from "firebase/auth";
-import {doc, getDoc, setDoc, updateDoc} from "firebase/firestore";
+import {doc, setDoc, updateDoc} from "firebase/firestore";
 import {ref, uploadBytes, getDownloadURL} from "firebase/storage";
 import {db, storage} from "@/lib/firebase/config";
-import {UserDoc} from "@/types/user";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
-import {Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter} from "@/components/ui/card";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {
     Save, User, Lock, Check,
-    Camera, Trash2, Mail, Sparkles, AlertCircle, AlertTriangle, ArrowUpCircle, ExternalLink
+    Camera, Trash2, Sparkles, AlertCircle, AlertTriangle, ArrowUpCircle, ExternalLink,
+    Mail
 } from "lucide-react";
 import {Spinner} from "@/components/ui/spinner";
 import {
@@ -43,13 +44,12 @@ export function ProfileForm() {
     const user = useAuthStore((s) => s.user);
     const userData = useAuthStore((s) => s.userData);
     const logout = useAuthStore((s) => s.logout);
+    const {handlePortal, isProcessing} = useBilling();
     const router = useRouter();
+
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [loadingAction, setLoadingAction] = useState<string | null>(null);
-
-    const [userDoc, setUserDoc] = useState<UserDoc | null>(null);
 
     const [firstname, setFirstname] = useState("");
     const [lastname, setLastname] = useState("");
@@ -63,32 +63,27 @@ export function ProfileForm() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const fetchUserDoc = async () => {
-            if (!user) return;
-            const refDoc = doc(db, "users", user.uid);
-            const snap = await getDoc(refDoc);
-
-            if (snap.exists()) {
-                const data = snap.data() as UserDoc;
-                setUserDoc(data);
-                setFirstname(data.firstname || "");
-                setLastname(data.lastname || "");
-            } else {
-                if (user.displayName) {
-                    const parts = user.displayName.split(" ");
-                    setFirstname(parts[0] || "");
-                    setLastname(parts.slice(1).join(" ") || "");
-                }
-            }
-        };
-        void fetchUserDoc();
-    }, [user]);
+        if (userData) {
+            setFirstname(userData.firstname || "");
+            setLastname(userData.lastname || "");
+        } else if (user?.displayName) {
+            const parts = user.displayName.split(" ");
+            setFirstname(parts[0] || "");
+            setLastname(parts.slice(1).join(" ") || "");
+        }
+    }, [userData, user]);
 
     useEffect(() => {
         if (success) {
             toast.success("Profil mis à jour avec succès.");
         }
     }, [success]);
+
+    useEffect(() => {
+        if (error) {
+            toast.error(error);
+        }
+    }, [error]);
 
     const getInitials = () => {
         const f = firstname ? firstname[0].toUpperCase() : "";
@@ -114,51 +109,18 @@ export function ProfileForm() {
         }
     };
 
-    const handlePortal = async (targetPriceId?: string | null) => {
-        if (!user) return;
-
-        if (!userData?.subscription?.stripeCustomerId) {
-            router.push("/billing");
-            return;
-        }
-
-        setLoadingAction(targetPriceId ? "portal_upgrade" : "portal");
-        setError(null);
-
-        try {
-            const res = await fetch("/api/stripe/portal", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    userId: user.uid,
-                    priceId: targetPriceId,
-                }),
-            });
-            const data = await res.json();
-            if (!res.ok || !data.url) {
-                setError(data.error || "Impossible d'accéder au portail.");
-                return;
-            }
-            window.location.href = data.url;
-        } catch {
-            setError("Erreur de connexion au serveur.");
-        } finally {
-            setLoadingAction(null);
-        }
-    };
-
     const handleUpdateProfile = async (e: SyntheticEvent) => {
         e.preventDefault();
+        if (!user) return;
+
         setLoading(true);
         setError(null);
         setSuccess(false);
 
         try {
-            if (!user) return;
-
-            if (newPassword) {
+            if (newPassword || currentPassword || confirmPassword) {
                 if (!currentPassword) {
-                    setError("Veuillez entrer votre mot de passe actuel pour le modifier.");
+                    setError("Veuillez entrer votre mot de passe actuel.");
                     setLoading(false);
                     return;
                 }
@@ -204,14 +166,14 @@ export function ProfileForm() {
                 const userRef = doc(db, "users", user.uid);
 
                 const updatePayload = {
-                    firstname: firstname,
-                    lastname: lastname,
+                    firstname,
+                    lastname,
                     photoUrl: newPhotoURL || undefined,
                     email: user.email || "",
                     updatedAt: new Date() as unknown as import("firebase/firestore").Timestamp
                 };
 
-                if (!userDoc) {
+                if (!userData) {
                     await setDoc(userRef, {
                         uid: user.uid,
                         role: "store_owner",
@@ -228,20 +190,17 @@ export function ProfileForm() {
             setTimeout(() => setSuccess(false), 3000);
 
         } catch (err: unknown) {
-            console.error(err);
             let message = "Une erreur est survenue.";
-
-            if (typeof err === 'object' && err !== null && 'code' in err) {
+            if (err && typeof err === "object" && "code" in err) {
                 const code = (err as { code: string }).code;
-                if (code === 'auth/wrong-password') {
-                    message = "L'ancien mot de passe est incorrect.";
-                } else if (code === 'auth/requires-recent-login') {
+                if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
+                    message = "Le mot de passe actuel est incorrect.";
+                } else if (code === "auth/requires-recent-login") {
                     message = "Par sécurité, veuillez vous reconnecter avant de modifier ces informations.";
                 }
             } else if (err instanceof Error) {
                 message = err.message;
             }
-
             setError(message);
         } finally {
             setLoading(false);
@@ -294,7 +253,7 @@ export function ProfileForm() {
                     </CardHeader>
                     <CardContent className="pb-6 flex justify-center">
                         <Badge variant="outline" className="capitalize px-3 py-1 bg-slate-50">
-                            {userDoc?.role === "superadmin" ? "Administrateur" : "Commerçant"}
+                            {userData?.role === "superadmin" ? "Administrateur" : "Commerçant"}
                         </Badge>
                     </CardContent>
                 </Card>
@@ -315,10 +274,10 @@ export function ProfileForm() {
 
                         <div className="text-xs text-slate-400">
                             Statut : <span
-                            className={`font-medium ${userData?.subscription?.status === 'active' ? 'text-green-600' : 'text-orange-600'} capitalize`}>
-                                {userData?.subscription?.status === 'active' ? 'Actif' :
-                                    userData?.subscription?.status === 'trialing' ? 'Essai' :
-                                        userData?.subscription?.status === 'canceled' ? 'Annulé' :
+                            className={`font-medium ${userData?.subscription?.status === "active" ? "text-green-600" : "text-orange-600"} capitalize`}>
+                                {userData?.subscription?.status === "active" ? "Actif" :
+                                    userData?.subscription?.status === "trialing" ? "Essai" :
+                                        userData?.subscription?.status === "canceled" ? "Annulé" :
                                             userData?.subscription?.status || "Gratuit"}
                             </span>
                         </div>
@@ -327,9 +286,9 @@ export function ProfileForm() {
                             <Button
                                 className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-md"
                                 onClick={() => handlePortal()}
-                                disabled={!!loadingAction}
+                                disabled={!!isProcessing}
                             >
-                                {loadingAction === "portal" ? (
+                                {isProcessing === "portal_main" ? (
                                     <Spinner className="mr-2 h-4 w-4 animate-spin"/>
                                 ) : (
                                     <ExternalLink className="mr-2 h-4 w-4"/>
@@ -345,9 +304,9 @@ export function ProfileForm() {
                                         ? handlePortal("price_1Sxtex9mcp2EBniBDOFUCQEr")
                                         : router.push("/billing")
                                     }
-                                    disabled={!!loadingAction}
+                                    disabled={!!isProcessing}
                                 >
-                                    {loadingAction === "portal_upgrade" ? (
+                                    {isProcessing === "portal_upgrade" ? (
                                         <Spinner className="mr-2 h-4 w-4 animate-spin"/>
                                     ) : (
                                         <ArrowUpCircle className="mr-2 h-4 w-4"/>
@@ -410,81 +369,77 @@ export function ProfileForm() {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-slate-200 shadow-sm rounded-2xl">
-                        <CardHeader className="pb-4 border-b border-slate-100">
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <Lock className="h-5 w-5 text-indigo-600"/> Sécurité
-                            </CardTitle>
-                            <CardDescription>Changez votre mot de passe en toute sécurité.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4 pt-6">
+                    {user?.providerData?.[0]?.providerId === "password" && (
+                        <Card className="border-slate-200 shadow-sm rounded-2xl">
+                            <CardHeader className="pb-4 border-b border-slate-100">
+                                <CardTitle className="flex items-center gap-2 text-lg">
+                                    <Lock className="h-5 w-5 text-indigo-600"/> Sécurité
+                                </CardTitle>
+                                <CardDescription>Modifiez votre mot de passe.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4 pt-6">
 
-                            <div className="space-y-2">
-                                <Label htmlFor="current-password">Mot de passe actuel <span
-                                    className="text-red-500">*</span></Label>
-                                <Input
-                                    id="current-password"
-                                    type="password"
-                                    value={currentPassword}
-                                    onChange={(e) => setCurrentPassword(e.target.value)}
-                                    className="rounded-xl"
-                                    placeholder="Requis pour valider les changements"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                                 <div className="space-y-2">
-                                    <Label htmlFor="new-password">Nouveau mot de passe</Label>
+                                    <Label htmlFor="current-password">Mot de passe actuel <span
+                                        className="text-red-500">*</span></Label>
                                     <Input
-                                        id="new-password"
+                                        id="current-password"
                                         type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        value={currentPassword}
+                                        onChange={(e) => setCurrentPassword(e.target.value)}
                                         className="rounded-xl"
-                                        placeholder="6 caractères minimum"
+                                        placeholder="Requis pour valider les changements"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="confirm-password">Confirmer le nouveau</Label>
-                                    <Input
-                                        id="confirm-password"
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="rounded-xl"
-                                        placeholder="Répétez le nouveau"
-                                    />
-                                </div>
-                            </div>
-                        </CardContent>
-                        <CardFooter className="bg-slate-50/50 border-t border-slate-100 py-4 flex justify-end">
-                            <Button
-                                type="submit"
-                                disabled={loading}
-                                className={`rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100 shadow-md px-6 ${
-                                    success
-                                        ? "bg-green-600 hover:bg-green-700 shadow-green-200 text-white"
-                                        : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 text-white"
-                                }`}
-                            >
-                                {loading ? (
-                                    <><Spinner className="mr-2 h-4 w-4"/> Sauvegarde en cours...</>
-                                ) : success ? (
-                                    <><Check className="mr-2 h-4 w-4"/> Enregistré avec succès !</>
-                                ) : (
-                                    <><Save className="mr-2 h-4 w-4"/> Enregistrer les modifications</>
-                                )}
-                            </Button>
-                        </CardFooter>
-                    </Card>
 
-                    {error && (
-                        <Alert variant="destructive" className="bg-red-50 border-red-100 text-red-800 rounded-xl">
-                            <AlertCircle className="h-4 w-4"/>
-                            <AlertTitle>Erreur</AlertTitle>
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new-password">Nouveau mot de passe</Label>
+                                        <Input
+                                            id="new-password"
+                                            type="password"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            className="rounded-xl"
+                                            placeholder="6 caractères minimum"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="confirm-password">Confirmer le nouveau</Label>
+                                        <Input
+                                            id="confirm-password"
+                                            type="password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            className="rounded-xl"
+                                            placeholder="Répétez le nouveau"
+                                        />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     )}
+
+                    <div className="flex justify-end">
+                        <Button
+                            type="submit"
+                            className={`rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100 shadow-md px-6 ${
+                                success
+                                    ? "bg-green-600 hover:bg-green-700 shadow-green-200 text-white"
+                                    : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 text-white"
+                            }`}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <Spinner className="h-4 w-4 animate-spin"/>
+                            ) : success ? (
+                                <Check className="h-4 w-4"/>
+                            ) : (
+                                <Save className="h-4 w-4"/>
+                            )}
+                            {loading ? "Enregistrement..." : success ? "Enregistré !" : "Enregistrer les modifications"}
+                        </Button>
+                    </div>
                 </form>
 
                 <Card className="border-red-100 bg-red-50/30 shadow-none rounded-2xl mt-8">
@@ -492,6 +447,7 @@ export function ProfileForm() {
                         <CardTitle className="text-red-600 flex items-center gap-2 text-base">
                             <AlertTriangle className="h-5 w-5"/> Zone de danger
                         </CardTitle>
+                        <CardDescription>Actions irréversibles.</CardDescription>
                     </CardHeader>
                     <CardContent
                         className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -512,10 +468,12 @@ export function ProfileForm() {
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                    <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleDeleteAccount}
-                                                       className="bg-red-600 hover:bg-red-700 rounded-xl">
-                                        Oui, supprimer tout
+                                    <AlertDialogCancel className="rounded-xl cursor-pointer">Annuler</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={handleDeleteAccount}
+                                        className="bg-red-600 hover:bg-red-700 rounded-xl cursor-pointer"
+                                    >
+                                        Confirmer la suppression
                                     </AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
@@ -523,6 +481,7 @@ export function ProfileForm() {
                     </CardContent>
                 </Card>
             </div>
+
         </div>
     );
 }

@@ -1,13 +1,19 @@
 import {NextResponse} from "next/server";
 import {stripe} from "@/lib/stripe";
 import {adminDb} from "@/lib/firebase/admin";
+import {verifyAuthToken} from "@/lib/firebase/auth-api";
 
 export async function POST(req: Request) {
     try {
+        const callerUid = await verifyAuthToken(req);
         const {priceId, userId, email, returnUrl: url} = await req.json();
 
         if (!userId || !priceId) {
-            return new NextResponse(JSON.stringify({error: "Missing data"}), {status: 400});
+            return NextResponse.json({error: "Missing data"}, {status: 400});
+        }
+
+        if (callerUid !== userId) {
+            return NextResponse.json({error: "Unauthorized"}, {status: 401});
         }
 
         const userDoc = await adminDb.collection("users").doc(userId).get();
@@ -35,7 +41,13 @@ export async function POST(req: Request) {
 
         return NextResponse.json({url: session.url});
     } catch (error: unknown) {
+        if (error instanceof Error && error.message.includes("Authorization")) {
+            return NextResponse.json({error: "Unauthorized"}, {status: 401});
+        }
         console.error("[STRIPE CHECKOUT ERROR]", error);
-        return new NextResponse(JSON.stringify({error: error instanceof Error ? error.message : 'Unknown error'}), {status: 500});
+        return NextResponse.json(
+            {error: error instanceof Error ? error.message : "Unknown error"},
+            {status: 500}
+        );
     }
 }

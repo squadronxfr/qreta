@@ -1,15 +1,20 @@
 import {NextResponse} from "next/server";
 import {stripe} from "@/lib/stripe";
 import {adminDb} from "@/lib/firebase/admin";
-
+import {verifyAuthToken} from "@/lib/firebase/auth-api";
 import Stripe from "stripe";
 
 export async function POST(req: Request) {
     try {
+        const callerUid = await verifyAuthToken(req);
         const {userId, priceId} = await req.json();
 
         if (!userId) {
             return NextResponse.json({error: "Missing userId"}, {status: 400});
+        }
+
+        if (callerUid !== userId) {
+            return NextResponse.json({error: "Unauthorized"}, {status: 401});
         }
 
         const userDoc = await adminDb.collection("users").doc(userId).get();
@@ -66,14 +71,15 @@ export async function POST(req: Request) {
 
         return NextResponse.json({url: session.url});
     } catch (error: unknown) {
+        if (error instanceof Error && error.message.includes("Authorization")) {
+            return NextResponse.json({error: "Unauthorized"}, {status: 401});
+        }
         console.error("[STRIPE_PORTAL]", error);
 
-        if (error instanceof Error && 'type' in error && (error as {
+        if (error instanceof Error && "type" in error && (error as {
             type: unknown
-        }).type === 'StripeInvalidRequestError') {
-            return NextResponse.json({
-                error: "Une erreur est survenue lors de la requête"
-            }, {status: 400});
+        }).type === "StripeInvalidRequestError") {
+            return NextResponse.json({error: "Une erreur est survenue lors de la requête"}, {status: 400});
         }
 
         return NextResponse.json({error: "Internal Error"}, {status: 500});

@@ -25,8 +25,16 @@ export function useBilling() {
     const currentPlanKey = (subscription?.plan as PlanKey) || "free";
 
     const isSubscribed = ["active", "trialing", "past_due"].includes(subscription?.status || "");
-
     const hasStripeId = !!subscription?.stripeCustomerId;
+
+    const getAuthHeaders = async (): Promise<Record<string, string>> => {
+        if (!user) throw new Error("Not authenticated");
+        const token = await user.getIdToken();
+        return {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+        };
+    };
 
     useEffect(() => {
         if (!user || !hasStripeId) return;
@@ -34,8 +42,10 @@ export function useBilling() {
         const fetchInvoices = async () => {
             setIsLoadingInvoices(true);
             try {
+                const headers = await getAuthHeaders();
                 const res = await fetch("/api/stripe/invoices", {
                     method: "POST",
+                    headers,
                     body: JSON.stringify({userId: user.uid}),
                 });
                 if (res.ok) {
@@ -57,14 +67,15 @@ export function useBilling() {
         setIsProcessing(targetPlanKey);
 
         try {
+            const headers = await getAuthHeaders();
             const res = await fetch("/api/stripe/checkout", {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
+                headers,
                 body: JSON.stringify({
                     priceId: SUBSCRIPTION_PLANS[targetPlanKey].priceId,
                     userId: user.uid,
                     email: user.email,
-                    returnUrl: window.location.href
+                    returnUrl: window.location.href,
                 }),
             });
 
@@ -90,9 +101,10 @@ export function useBilling() {
         setIsProcessing(sourceKey);
 
         try {
+            const headers = await getAuthHeaders();
             const res = await fetch("/api/stripe/portal", {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
+                headers,
                 body: JSON.stringify({userId: user.uid, returnUrl: window.location.href}),
             });
             const data = await res.json();
@@ -114,12 +126,12 @@ export function useBilling() {
 
     let renewalDate = null;
     if (subscription?.currentPeriodEnd) {
-        const seconds = typeof subscription.currentPeriodEnd === 'object' && 'seconds' in subscription.currentPeriodEnd
+        const seconds = typeof subscription.currentPeriodEnd === "object" && "seconds" in subscription.currentPeriodEnd
             ? subscription.currentPeriodEnd.seconds
             : subscription.currentPeriodEnd;
 
         renewalDate = new Date(seconds * 1000).toLocaleDateString("fr-FR", {
-            day: "numeric", month: "long", year: "numeric"
+            day: "numeric", month: "long", year: "numeric",
         });
     }
 
@@ -133,6 +145,6 @@ export function useBilling() {
         cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd,
         onPlanAction,
         handlePortal,
-        userData
+        userData,
     };
 }

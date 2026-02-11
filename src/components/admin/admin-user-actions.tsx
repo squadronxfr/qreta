@@ -2,8 +2,8 @@
 
 import {useState} from "react";
 import {UserDoc, SubscriptionPlan, SubscriptionStatus} from "@/types/user";
-import {db} from "@/lib/firebase/config";
-import {doc, updateDoc} from "firebase/firestore";
+import {Store} from "@/types/store";
+import {updateUserSubscriptionAdmin, toggleUserBlock} from "@/lib/firebase/users";
 import {
     MoreHorizontal, User, ExternalLink, ShieldAlert,
     CreditCard, Check, Copy
@@ -35,9 +35,10 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import {Label} from "@/components/ui/label";
+import {toast} from "sonner";
 
 interface AdminUserActionsProps {
-    user: UserDoc;
+    user: UserDoc & { stores: Store[] };
     onUpdate: () => void;
 }
 
@@ -53,31 +54,26 @@ export function AdminUserActions({user, onUpdate}: AdminUserActionsProps) {
 
     const handleCopyId = () => {
         navigator.clipboard.writeText(user.uid);
-        alert("ID copié !");
+        toast.success("ID copié !");
     };
 
     const handleOpenStripe = () => {
         if (user.subscription?.stripeCustomerId) {
-            window.open(`https://dashboard.stripe.com/search?query=${user.subscription.stripeCustomerId}`, '_blank');
+            window.open(`https://dashboard.stripe.com/search?query=${user.subscription.stripeCustomerId}`, "_blank");
         } else {
-            alert("Aucun ID Stripe associé.");
+            toast.error("Aucun ID Stripe associé.");
         }
     };
 
     const handleUpdateSubscription = async () => {
         setLoading(true);
         try {
-            const ref = doc(db, "users", user.uid);
-            await updateDoc(ref, {
-                "subscription.plan": newPlan,
-                "subscription.status": newStatus,
-                updatedAt: new Date()
-            });
+            await updateUserSubscriptionAdmin(user.uid, newPlan, newStatus);
             setShowSubDialog(false);
+            toast.success("Abonnement mis à jour.");
             onUpdate();
-        } catch (error) {
-            console.error("Erreur update sub:", error);
-            alert("Erreur lors de la mise à jour");
+        } catch {
+            toast.error("Erreur lors de la mise à jour.");
         } finally {
             setLoading(false);
         }
@@ -86,16 +82,12 @@ export function AdminUserActions({user, onUpdate}: AdminUserActionsProps) {
     const handleToggleBlock = async () => {
         setLoading(true);
         try {
-            const ref = doc(db, "users", user.uid);
-            await updateDoc(ref, {
-                isBlocked: !user.isBlocked,
-                updatedAt: new Date()
-            });
+            await toggleUserBlock(user.uid, !!user.isBlocked);
             setShowBlockDialog(false);
+            toast.success(user.isBlocked ? "Utilisateur débloqué." : "Utilisateur bloqué.");
             onUpdate();
-        } catch (error) {
-            console.error("Erreur block:", error);
-            alert("Erreur lors du blocage");
+        } catch {
+            toast.error("Erreur lors du blocage.");
         } finally {
             setLoading(false);
         }
@@ -131,80 +123,73 @@ export function AdminUserActions({user, onUpdate}: AdminUserActionsProps) {
                         onClick={() => setShowBlockDialog(true)}
                         className={`cursor-pointer focus:bg-red-50 ${user.isBlocked ? "text-green-600 focus:text-green-700" : "text-red-600 focus:text-red-700"}`}
                     >
-                        {user.isBlocked ? (
-                            <><Check className="mr-2 h-4 w-4"/> Débloquer l&apos;accès</>
-                        ) : (
-                            <><ShieldAlert className="mr-2 h-4 w-4"/> Bloquer l&apos;accès</>
-                        )}
+                        <ShieldAlert className="mr-2 h-4 w-4"/>
+                        {user.isBlocked ? "Débloquer" : "Bloquer"}
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
 
             <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="rounded-2xl">
                     <DialogHeader>
-                        <DialogTitle>Détails du client</DialogTitle>
+                        <DialogTitle>Profil de {user.firstname} {user.lastname}</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 py-2">
-                        <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border">
-                            <div
-                                className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg">
-                                {(user.firstname?.[0] || user.email[0]).toUpperCase()}
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-slate-900 capitalize">{user.firstname} {user.lastname}</h4>
-                                <p className="text-sm text-slate-500">{user.email}</p>
+                    <div className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-slate-500">Email</span>
+                            <span className="font-medium">{user.email}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-500">UID</span>
+                            <div className="flex items-center gap-2">
+                                <code
+                                    className="text-xs bg-slate-100 px-2 py-1 rounded">{user.uid.slice(0, 12)}...</code>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopyId}>
+                                    <Copy className="h-3 w-3"/>
+                                </Button>
                             </div>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <Label className="text-xs text-slate-400 uppercase">Rôle</Label>
-                                <div className="font-medium capitalize">{user.role}</div>
-                            </div>
-                            <div className="space-y-1">
-                                <Label className="text-xs text-slate-400 uppercase">Statut</Label>
-                                <div>
-                                    {user.isBlocked
-                                        ? <Badge variant="destructive">Bloqué</Badge>
-                                        : <Badge variant="outline"
-                                                 className="text-green-600 bg-green-50 border-green-200">Actif</Badge>
-                                    }
-                                </div>
-                            </div>
-                            <div className="space-y-1 col-span-2">
-                                <Label className="text-xs text-slate-400 uppercase">ID Utilisateur</Label>
-                                <div className="flex items-center gap-2">
-                                    <code className="bg-slate-100 px-2 py-1 rounded text-xs font-mono flex-1 truncate">
-                                        {user.uid}
-                                    </code>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopyId}>
-                                        <Copy className="h-3 w-3"/>
-                                    </Button>
-                                </div>
-                            </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-500">Rôle</span>
+                            <Badge variant="outline" className="capitalize">{user.role}</Badge>
                         </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-500">Plan</span>
+                            <Badge className="capitalize">{user.subscription?.plan || "free"}</Badge>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-500">Statut abonnement</span>
+                            <span className="capitalize">{user.subscription?.status || "N/A"}</span>
+                        </div>
+                        {user.subscription?.stripeCustomerId && (
+                            <div className="flex justify-between">
+                                <span className="text-slate-500">Stripe ID</span>
+                                <code className="text-xs bg-slate-100 px-2 py-1 rounded">
+                                    {user.subscription.stripeCustomerId}
+                                </code>
+                            </div>
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={showSubDialog} onOpenChange={setShowSubDialog}>
-                <DialogContent>
+                <DialogContent className="rounded-2xl">
                     <DialogHeader>
                         <DialogTitle>Modifier l&apos;abonnement</DialogTitle>
                         <DialogDescription>
-                            Modifie directement la base de donn&eacute;es.
+                            Modifier manuellement le plan de {user.firstname} {user.lastname}.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
                             <Label>Plan</Label>
                             <Select value={newPlan} onValueChange={(v: SubscriptionPlan) => setNewPlan(v)}>
-                                <SelectTrigger>
+                                <SelectTrigger className="rounded-xl">
                                     <SelectValue/>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="free">Gratuit (Free)</SelectItem>
+                                    <SelectItem value="free">Free</SelectItem>
                                     <SelectItem value="starter">Starter</SelectItem>
                                     <SelectItem value="pro">Pro</SelectItem>
                                 </SelectContent>
@@ -213,50 +198,57 @@ export function AdminUserActions({user, onUpdate}: AdminUserActionsProps) {
                         <div className="space-y-2">
                             <Label>Statut</Label>
                             <Select value={newStatus} onValueChange={(v: SubscriptionStatus) => setNewStatus(v)}>
-                                <SelectTrigger>
+                                <SelectTrigger className="rounded-xl">
                                     <SelectValue/>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="active">Actif</SelectItem>
-                                    <SelectItem value="trialing">Essai (Trial)</SelectItem>
-                                    <SelectItem value="past_due">Impayé (Past Due)</SelectItem>
-                                    <SelectItem value="canceled">Annulé</SelectItem>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="trialing">Trialing</SelectItem>
+                                    <SelectItem value="past_due">Past Due</SelectItem>
+                                    <SelectItem value="canceled">Canceled</SelectItem>
+                                    <SelectItem value="unpaid">Unpaid</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowSubDialog(false)}>Annuler</Button>
-                        <Button onClick={handleUpdateSubscription} disabled={loading}>
-                            {loading && <Spinner className="mr-2 h-4 w-4"/>}
-                            Sauvegarder
+                        <Button variant="outline" onClick={() => setShowSubDialog(false)}
+                                className="rounded-xl cursor-pointer">
+                            Annuler
+                        </Button>
+                        <Button onClick={handleUpdateSubscription} disabled={loading}
+                                className="bg-indigo-600 rounded-xl cursor-pointer">
+                            {loading ? <Spinner className="h-4 w-4 animate-spin"/> : <Check className="mr-2 h-4 w-4"/>}
+                            Appliquer
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
-                <DialogContent>
+                <DialogContent className="rounded-2xl">
                     <DialogHeader>
-                        <DialogTitle className={user.isBlocked ? "text-green-600" : "text-red-600"}>
-                            {user.isBlocked ? "Débloquer" : "Bloquer l'accès"}
+                        <DialogTitle>
+                            {user.isBlocked ? "Débloquer" : "Bloquer"} {user.firstname} {user.lastname} ?
                         </DialogTitle>
                         <DialogDescription>
                             {user.isBlocked
-                                ? "L'utilisateur pourra de nouveau se connecter."
-                                : "L'utilisateur sera déconnecté."
-                            }
+                                ? "L'utilisateur pourra de nouveau accéder à son compte."
+                                : "L'utilisateur ne pourra plus accéder à son compte."}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowBlockDialog(false)}>Annuler</Button>
+                        <Button variant="outline" onClick={() => setShowBlockDialog(false)}
+                                className="rounded-xl cursor-pointer">
+                            Annuler
+                        </Button>
                         <Button
-                            variant={user.isBlocked ? "default" : "destructive"}
                             onClick={handleToggleBlock}
                             disabled={loading}
+                            className={`rounded-xl cursor-pointer ${user.isBlocked ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}
                         >
-                            {loading && <Spinner className="mr-2 h-4 w-4"/>}
-                            {user.isBlocked ? "Réactiver" : "Bloquer"}
+                            {loading ? <Spinner
+                                className="h-4 w-4 animate-spin"/> : (user.isBlocked ? "Débloquer" : "Bloquer")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
