@@ -43,7 +43,7 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
         categoryId: "",
         type: "service" as "product" | "service",
         isStartingPrice: false,
-        duration: ""
+        duration: 0,
     });
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -67,7 +67,7 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
                     price: parseFloat(formData.price) || 0,
                     type: formData.type,
                     isStartingPrice: formData.isStartingPrice,
-                    duration: formData.duration || undefined,
+                    duration: formData.duration || null,
                 },
                 imageFile
             );
@@ -79,7 +79,7 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
                 categoryId: "",
                 type: "service",
                 isStartingPrice: false,
-                duration: "",
+                duration: 0,
             });
             setImageFile(null);
             if (fileInputRef.current) fileInputRef.current.value = "";
@@ -174,9 +174,10 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
                             <Label htmlFor="item-duration">Dur&eacute;e (Optionnel)</Label>
                             <Input
                                 id="item-duration"
-                                placeholder="Ex: 30 min, 1h..."
+                                placeholder="Ex: 30 pour 30 minutes"
+                                type="number"
                                 value={formData.duration}
-                                onChange={(e) => setFormData({...formData, duration: e.target.value})}
+                                onChange={(e) => setFormData({...formData, duration: parseInt(e.target.value) || 0})}
                                 className="rounded-xl"
                             />
                         </div>
