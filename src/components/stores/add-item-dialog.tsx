@@ -24,6 +24,7 @@ import {Checkbox} from "@/components/ui/checkbox";
 import {Plus, ImageIcon} from "lucide-react";
 import {Spinner} from "@/components/ui/spinner";
 import {Category} from "@/types/store";
+import {toast} from "sonner";
 
 interface AddItemDialogProps {
     storeId: string;
@@ -54,7 +55,10 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
 
     const handleSubmit = async (e: SyntheticEvent) => {
         e.preventDefault();
-        if (!formData.categoryId) return;
+        if (!formData.categoryId) {
+            toast.error("Veuillez choisir une catégorie pour créer un produit.");
+            return;
+        }
 
         setLoading(true);
         try {
@@ -171,7 +175,7 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
 
                     {formData.type === "service" && (
                         <div className="space-y-2">
-                            <Label htmlFor="item-duration">Dur&eacute;e (Optionnel)</Label>
+                            <Label htmlFor="item-duration">Dur&eacute;e en minutes</Label>
                             <Input
                                 id="item-duration"
                                 placeholder="Ex: 30 pour 30 minutes"
