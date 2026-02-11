@@ -9,10 +9,12 @@ import {
     getDocs,
     updateDoc,
     where,
+    writeBatch,
     QueryDocumentSnapshot,
     DocumentData,
     Timestamp,
 } from "firebase/firestore";
+import {deleteUser, User} from "firebase/auth";
 import {UserDoc, SubscriptionPlan, SubscriptionStatus} from "@/types/user";
 import {Store} from "@/types/store";
 
@@ -49,12 +51,14 @@ export const fetchUsersPaginated = async (
     const userIds = usersList.map((u) => u.uid);
     const stores: Store[] = [];
 
-    for (let i = 0; i < userIds.length; i += 30) {
-        const batch = userIds.slice(i, i + 30);
-        const storesSnap = await getDocs(
-            query(collection(db, "stores"), where("userId", "in", batch))
-        );
-        stores.push(...storesSnap.docs.map((d) => ({id: d.id, ...d.data()} as Store)));
+    if (userIds.length > 0) {
+        for (let i = 0; i < userIds.length; i += 30) {
+            const batch = userIds.slice(i, i + 30);
+            const storesSnap = await getDocs(
+                query(collection(db, "stores"), where("userId", "in", batch))
+            );
+            stores.push(...storesSnap.docs.map((d) => ({id: d.id, ...d.data()} as Store)));
+        }
     }
 
     const users: AdminUserView[] = usersList.map((user) => ({
@@ -85,4 +89,28 @@ export const toggleUserBlock = async (
         isBlocked: !isCurrentlyBlocked,
         updatedAt: Timestamp.now(),
     });
+};
+
+/**
+ * Supprime complètement un utilisateur :
+ * 1. Ses boutiques (stores)
+ * 2. Son document utilisateur (users/{uid})
+ * 3. Son compte d'authentification (Auth)
+ */
+export const deleteAccount = async (user: User) => {
+    const storesQuery = query(collection(db, "stores"), where("userId", "==", user.uid));
+    const storesSnapshot = await getDocs(storesQuery);
+
+    const batch = writeBatch(db);
+
+    storesSnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
+
+    const userRef = doc(db, "users", user.uid);
+    batch.delete(userRef);
+
+    await batch.commit();
+
+    await deleteUser(user);
 };

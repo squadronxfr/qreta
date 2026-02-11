@@ -7,23 +7,22 @@ import {useRouter} from "next/navigation";
 import {
     updateProfile,
     updatePassword,
-    deleteUser,
     EmailAuthProvider,
     reauthenticateWithCredential
 } from "firebase/auth";
 import {doc, setDoc, updateDoc} from "firebase/firestore";
 import {ref, uploadBytes, getDownloadURL} from "firebase/storage";
 import {db, storage} from "@/lib/firebase/config";
+import {deleteAccount} from "@/lib/firebase/users";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
-import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {
     Save, User, Lock, Check,
-    Camera, Trash2, Sparkles, AlertCircle, AlertTriangle, ArrowUpCircle, ExternalLink,
+    Camera, Trash2, Sparkles, AlertTriangle, ArrowUpCircle, ExternalLink,
     Mail
 } from "lucide-react";
 import {Spinner} from "@/components/ui/spinner";
@@ -102,10 +101,21 @@ export function ProfileForm() {
     const handleDeleteAccount = async () => {
         try {
             if (!user) return;
-            await deleteUser(user);
+
+            await deleteAccount(user);
+
             await logout();
-        } catch {
-            setError("Erreur critique : Veuillez vous reconnecter avant de supprimer votre compte.");
+            toast.success("Votre compte a été supprimé.");
+
+        } catch (err: unknown) {
+            console.error("Erreur suppression:", err);
+            if (err && typeof err === "object" && "code" in err && (err as {
+                code: string
+            }).code === 'auth/requires-recent-login') {
+                setError("Par sécurité, veuillez vous déconnecter et vous reconnecter avant de supprimer votre compte.");
+            } else {
+                setError("Erreur critique lors de la suppression.");
+            }
         }
     };
 
