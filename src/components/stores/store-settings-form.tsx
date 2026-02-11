@@ -355,7 +355,6 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                     </Card>
 
                     <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-                        {/* ... Contenu Visuel & Branding (inchangé) ... */}
                         <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
                             <CardTitle className="text-lg font-heading">Visuel & Branding</CardTitle>
                             <CardDescription>Personnalisez l&#39;apparence de votre catalogue.</CardDescription>
@@ -548,11 +547,8 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                     </Card>
                 </div>
 
-                {/* --- BLOC 3 : DANGER ZONE (Revient à gauche sur Desktop, Dernier sur Mobile) --- */}
-                {/* J'ai sorti ce bloc du premier div lg:col-span-8 pour le mettre ici à la fin */}
                 <div className="lg:col-span-8">
                     <Card className="border-red-100 bg-red-50/30 shadow-sm rounded-2xl mb-10">
-                        {/* ... Contenu Danger Zone (inchangé) ... */}
                         <CardHeader className="pb-4">
                             <CardTitle className="text-lg font-heading text-red-700 flex items-center gap-2">
                                 <AlertTriangle className="h-5 w-5"/> Zone de danger
