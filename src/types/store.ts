@@ -34,7 +34,7 @@ export interface Item {
     description: string;
     price: number;
     isStartingPrice: boolean;
-    duration?: string;
+    duration?: number | null;
     type: "product" | "service";
     imageUrl?: string;
     order: number;
