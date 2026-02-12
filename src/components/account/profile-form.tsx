@@ -28,7 +28,6 @@ import {
 import {Spinner} from "@/components/ui/spinner";
 import {
     AlertDialog,
-    AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
@@ -60,6 +59,10 @@ export function ProfileForm() {
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.photoURL || null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [deletePassword, setDeletePassword] = useState("");
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (userData) {
@@ -99,23 +102,39 @@ export function ProfileForm() {
     };
 
     const handleDeleteAccount = async () => {
+        if (!user || !user.email) return;
+
+        if (!deletePassword) {
+            toast.error("Veuillez entrer votre mot de passe pour confirmer.");
+            return;
+        }
+
+        setIsDeleting(true);
+
         try {
-            if (!user) return;
+            const credential = EmailAuthProvider.credential(user.email, deletePassword);
+            await reauthenticateWithCredential(user, credential);
 
             await deleteAccount(user);
-
             await logout();
             toast.success("Votre compte a été supprimé.");
-
+            router.push("/");
         } catch (err: unknown) {
             console.error("Erreur suppression:", err);
-            if (err && typeof err === "object" && "code" in err && (err as {
-                code: string
-            }).code === 'auth/requires-recent-login') {
-                setError("Par sécurité, veuillez vous déconnecter et vous reconnecter avant de supprimer votre compte.");
+            if (err && typeof err === "object" && "code" in err) {
+                const code = (err as { code: string }).code;
+                if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
+                    setError("Mot de passe incorrect.");
+                } else {
+                    setError("Erreur lors de la suppression du compte.");
+                }
             } else {
                 setError("Erreur critique lors de la suppression.");
             }
+        } finally {
+            setIsDeleting(false);
+            setDeletePassword("");
+            setShowDeleteDialog(false);
         }
     };
 
@@ -219,7 +238,6 @@ export function ProfileForm() {
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
             <div className="lg:col-span-4 space-y-6">
                 <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
                     <CardHeader className="text-center pb-2 pt-8">
@@ -230,14 +248,12 @@ export function ProfileForm() {
                                     {getInitials()}
                                 </AvatarFallback>
                             </Avatar>
-
                             <div
                                 className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center cursor-pointer"
                                 onClick={() => fileInputRef.current?.click()}
                             >
                                 <Camera className="text-white h-8 w-8"/>
                             </div>
-
                             {avatarPreview && (
                                 <Button
                                     variant="destructive"
@@ -252,7 +268,6 @@ export function ProfileForm() {
                                     <Trash2 className="h-4 w-4"/>
                                 </Button>
                             )}
-
                             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange}
                                    className="hidden"/>
                         </div>
@@ -267,7 +282,6 @@ export function ProfileForm() {
                         </Badge>
                     </CardContent>
                 </Card>
-
                 <Card className="border-indigo-100 bg-indigo-50/30 shadow-sm rounded-2xl overflow-hidden">
                     <CardHeader className="pb-3 border-b border-indigo-100/50">
                         <CardTitle className="text-base flex items-center gap-2 text-indigo-950">
@@ -281,7 +295,6 @@ export function ProfileForm() {
                                 {userData?.subscription?.plan || "Gratuit"}
                             </Badge>
                         </div>
-
                         <div className="text-xs text-slate-400">
                             Statut : <span
                             className={`font-medium ${userData?.subscription?.status === "active" ? "text-green-600" : "text-orange-600"} capitalize`}>
@@ -291,7 +304,6 @@ export function ProfileForm() {
                                             userData?.subscription?.status || "Gratuit"}
                             </span>
                         </div>
-
                         <div className="pt-2 flex flex-col gap-2">
                             <Button
                                 className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-md"
@@ -305,7 +317,6 @@ export function ProfileForm() {
                                 )}
                                 Gérer mon abonnement
                             </Button>
-
                             {userData?.subscription?.plan !== "pro" && (
                                 <Button
                                     variant="outline"
@@ -327,12 +338,9 @@ export function ProfileForm() {
                         </div>
                     </CardContent>
                 </Card>
-
             </div>
-
             <div className="lg:col-span-8 space-y-6">
                 <form onSubmit={handleUpdateProfile} className="space-y-6">
-
                     <Card className="border-slate-200 shadow-sm rounded-2xl">
                         <CardHeader className="pb-4 border-b border-slate-100">
                             <CardTitle className="flex items-center gap-2 text-lg">
@@ -378,7 +386,6 @@ export function ProfileForm() {
                             </div>
                         </CardContent>
                     </Card>
-
                     {user?.providerData?.[0]?.providerId === "password" && (
                         <Card className="border-slate-200 shadow-sm rounded-2xl">
                             <CardHeader className="pb-4 border-b border-slate-100">
@@ -388,7 +395,6 @@ export function ProfileForm() {
                                 <CardDescription>Modifiez votre mot de passe.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4 pt-6">
-
                                 <div className="space-y-2">
                                     <Label htmlFor="current-password">Mot de passe actuel <span
                                         className="text-red-500">*</span></Label>
@@ -401,7 +407,6 @@ export function ProfileForm() {
                                         placeholder="Requis pour valider les changements"
                                     />
                                 </div>
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                                     <div className="space-y-2">
                                         <Label htmlFor="new-password">Nouveau mot de passe</Label>
@@ -429,7 +434,6 @@ export function ProfileForm() {
                             </CardContent>
                         </Card>
                     )}
-
                     <div className="flex justify-end">
                         <Button
                             type="submit"
@@ -451,7 +455,6 @@ export function ProfileForm() {
                         </Button>
                     </div>
                 </form>
-
                 <Card className="border-red-100 bg-red-50/30 shadow-none rounded-2xl mt-8">
                     <CardHeader>
                         <CardTitle className="text-red-600 flex items-center gap-2 text-base">
@@ -465,7 +468,7 @@ export function ProfileForm() {
                             La suppression de votre compte est définitive. Toutes vos boutiques et données seront
                             effacées.
                         </p>
-                        <AlertDialog>
+                        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                             <AlertDialogTrigger asChild>
                                 <Button variant="destructive" className="rounded-xl whitespace-nowrap">Supprimer mon
                                     compte</Button>
@@ -477,21 +480,41 @@ export function ProfileForm() {
                                         Cette action est irréversible. Toutes vos données seront perdues définitivement.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
+                                <div className="py-4">
+                                    <Label htmlFor="delete-password" className="text-sm font-medium">
+                                        Confirmez avec votre mot de passe
+                                    </Label>
+                                    <Input
+                                        id="delete-password"
+                                        type="password"
+                                        value={deletePassword}
+                                        onChange={(e) => setDeletePassword(e.target.value)}
+                                        placeholder="Entrez votre mot de passe"
+                                        className="mt-2 rounded-xl"
+                                    />
+                                </div>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel className="rounded-xl cursor-pointer">Annuler</AlertDialogCancel>
-                                    <AlertDialogAction
+                                    <Button
                                         onClick={handleDeleteAccount}
+                                        disabled={isDeleting}
                                         className="bg-red-600 hover:bg-red-700 rounded-xl cursor-pointer"
                                     >
-                                        Confirmer la suppression
-                                    </AlertDialogAction>
+                                        {isDeleting ? (
+                                            <>
+                                                <Spinner className="mr-2 h-4 w-4"/>
+                                                Suppression...
+                                            </>
+                                        ) : (
+                                            "Confirmer la suppression"
+                                        )}
+                                    </Button>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
                     </CardContent>
                 </Card>
             </div>
-
         </div>
     );
 }

@@ -1,4 +1,6 @@
 "use client";
+// TODO 1 : Corriger la modal d'edition car pas de valeur a null par default dans produit (car produit n'as pas de duration) et ca fait planter la modale d'edition de produit
+// TODO 2 : Le champs duration n'apparait pas quand j'edite un service => cause :Erreur mise à jour: FirebaseError: Function updateDoc() called with invalid data. Unsupported field value: undefined (found in field duration in document items/JSM3noyQj057LNCqJXYi)
 
 import {useState, SyntheticEvent, ChangeEvent, useRef} from "react";
 import {createItem} from "@/lib/firebase/items";

@@ -1,5 +1,6 @@
 "use client";
 
+// TODO : Debug le non fonctionnement du bouton annuler dans la modale de création de boutique (le state open ne se remet pas à false)
 import React, {useState} from "react";
 import {useAuthStore} from "@/providers/auth-store-provider";
 import {createStore} from "@/lib/firebase/store";

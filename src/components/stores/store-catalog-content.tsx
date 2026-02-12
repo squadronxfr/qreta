@@ -1,5 +1,5 @@
 "use client";
-
+// TODO : Grisé le bouton de création d'un article / service si aucune catégorie n'existe, et afficher un message invitant à créer une catégorie d'abord
 import {useState, useMemo} from "react";
 import {Category, Item} from "@/types/store";
 import {AddCategoryDialog} from "@/components/stores/add-category-dialog";

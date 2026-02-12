@@ -1,8 +1,8 @@
 "use client";
 
-import {useState, useEffect} from "react";
 import {useAuthStore} from "@/providers/auth-store-provider";
-import {SUBSCRIPTION_PLANS, PlanKey} from "@/config/subscription";
+import {useBillingStore} from "@/providers/billing-store-provider";
+import {PlanKey} from "@/config/subscription";
 import {toast} from "sonner";
 
 export interface Invoice {
@@ -17,9 +17,12 @@ export interface Invoice {
 export function useBilling() {
     const user = useAuthStore((s) => s.user);
     const userData = useAuthStore((s) => s.userData);
-    const [invoices, setInvoices] = useState<Invoice[]>([]);
-    const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
-    const [isProcessing, setIsProcessing] = useState<string | null>(null);
+
+    const invoices = useBillingStore((s) => s.invoices);
+    const isLoadingInvoices = useBillingStore((s) => s.isLoadingInvoices);
+    const isProcessing = useBillingStore((s) => s.isProcessing);
+    const handleCheckoutStore = useBillingStore((s) => s.handleCheckout);
+    const handlePortalStore = useBillingStore((s) => s.handlePortal);
 
     const subscription = userData?.subscription;
     const currentPlanKey = (subscription?.plan as PlanKey) || "free";
@@ -27,66 +30,18 @@ export function useBilling() {
     const isSubscribed = ["active", "trialing", "past_due"].includes(subscription?.status || "");
     const hasStripeId = !!subscription?.stripeCustomerId;
 
-    const getAuthHeaders = async (): Promise<Record<string, string>> => {
-        if (!user) throw new Error("Not authenticated");
-        const token = await user.getIdToken();
-        return {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-        };
-    };
-
-    useEffect(() => {
-        if (!user || !hasStripeId) return;
-
-        const fetchInvoices = async () => {
-            setIsLoadingInvoices(true);
-            try {
-                const headers = await getAuthHeaders();
-                const res = await fetch("/api/stripe/invoices", {
-                    method: "POST",
-                    headers,
-                    body: JSON.stringify({userId: user.uid}),
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    setInvoices(data.invoices || []);
-                }
-            } catch {
-                console.error("Erreur lors de la récupération des factures.");
-            } finally {
-                setIsLoadingInvoices(false);
-            }
-        };
-
-        void fetchInvoices();
-    }, [user, hasStripeId]);
-
-    const handleCheckout = async (targetPlanKey: PlanKey) => {
+    const onPlanAction = async (targetPlanKey: PlanKey) => {
         if (!user) return;
-        setIsProcessing(targetPlanKey);
 
         try {
-            const headers = await getAuthHeaders();
-            const res = await fetch("/api/stripe/checkout", {
-                method: "POST",
-                headers,
-                body: JSON.stringify({
-                    priceId: SUBSCRIPTION_PLANS[targetPlanKey].priceId,
-                    userId: user.uid,
-                    email: user.email,
-                    returnUrl: window.location.href,
-                }),
-            });
-
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Erreur Checkout");
-
-            window.location.href = data.url;
-        } catch (err) {
-            console.error(err);
-            toast.error("Impossible d'initialiser le paiement.");
-            setIsProcessing(null);
+            if (isSubscribed && hasStripeId) {
+                await handlePortalStore(user, targetPlanKey, window.location.href);
+            } else {
+                await handleCheckoutStore(user, targetPlanKey, window.location.href);
+            }
+        } catch (error) {
+            console.error("Plan action error:", error);
+            toast.error(isSubscribed ? "Impossible d'accéder au portail." : "Impossible d'initialiser le paiement.");
         }
     };
 
@@ -98,30 +53,12 @@ export function useBilling() {
             return;
         }
 
-        setIsProcessing(sourceKey);
-
         try {
-            const headers = await getAuthHeaders();
-            const res = await fetch("/api/stripe/portal", {
-                method: "POST",
-                headers,
-                body: JSON.stringify({userId: user.uid, returnUrl: window.location.href}),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
-            window.location.href = data.url;
-        } catch {
+            await handlePortalStore(user, sourceKey, window.location.href);
+        } catch (error) {
+            console.error("Portal error:", error);
             toast.error("Impossible d'accéder au portail.");
-            setIsProcessing(null);
         }
-    };
-
-    const onPlanAction = async (targetPlanKey: PlanKey) => {
-        if (isSubscribed && hasStripeId) {
-            await handlePortal(targetPlanKey);
-            return;
-        }
-        await handleCheckout(targetPlanKey);
     };
 
     let renewalDate = null;

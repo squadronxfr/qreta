@@ -1,8 +1,8 @@
 "use client";
 
-import {createContext, useEffect, useState, use, type ReactNode} from "react";
-import {useStore, type StoreApi} from "zustand";
-import {createAuthStore, type AuthStore} from "@/stores/auth-store";
+import {createContext, type ReactNode, use, useEffect, useState} from "react";
+import {type StoreApi, useStore} from "zustand";
+import {type AuthStore, createAuthStore} from "@/stores/auth-store";
 
 const AuthStoreContext = createContext<StoreApi<AuthStore> | null>(null);
 
@@ -10,8 +10,7 @@ export function AuthStoreProvider({children}: { children: ReactNode }) {
     const [store] = useState(() => createAuthStore());
 
     useEffect(() => {
-        const cleanup = store.getState().initialize();
-        return cleanup;
+        return store.getState().initialize();
     }, [store]);
 
     return (
