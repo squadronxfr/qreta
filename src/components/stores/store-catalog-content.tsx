@@ -1,5 +1,4 @@
 "use client";
-// TODO : Grisé le bouton de création d'un article / service si aucune catégorie n'existe, et afficher un message invitant à créer une catégorie d'abord
 import {useState, useMemo} from "react";
 import {Category, Item} from "@/types/store";
 import {AddCategoryDialog} from "@/components/stores/add-category-dialog";
@@ -8,7 +7,14 @@ import {EditItemDialog} from "@/components/stores/edit-item-dialog";
 import {CategoryActions} from "@/components/stores/category-actions";
 import {ItemActions} from "@/components/stores/item-actions";
 import {Badge} from "@/components/ui/badge";
+import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
     Select,
     SelectContent,
@@ -19,6 +25,7 @@ import {
 import {Search, Filter, Clock, LayoutGrid, Layers, ImageIcon} from "lucide-react";
 import Image from "next/image";
 import {cn} from "@/lib/utils";
+import {toast} from "sonner";
 
 interface StoreCatalogContentProps {
     storeId: string;
@@ -31,6 +38,10 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
     const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
     const [categoryFilter, setCategoryFilter] = useState<string>("all");
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
+    const hasCategories = categories.length > 0;
+    const totalItems = items.length;
+    const activeItems = items.filter((item) => item.isActive).length;
+    const inactiveItems = totalItems - activeItems;
 
     const editingItem = items.find((i) => i.id === editingItemId);
 
@@ -49,6 +60,18 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
         });
     }, [items, searchQuery, statusFilter, categoryFilter]);
 
+    const formatPrice = (price: number) => {
+        return new Intl.NumberFormat("fr-FR", {
+            style: "currency",
+            currency: "EUR",
+            maximumFractionDigits: 2,
+        }).format(price);
+    };
+
+    const handleUnavailableAdd = () => {
+        toast.info("Ajoutez d'abord une catégorie pour créer un élément.");
+    };
+
     return (
         <div className="space-y-8">
             <div
@@ -57,7 +80,7 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"/>
                         <Input
-                            placeholder="Rechercher un article..."
+                            placeholder="Rechercher un élément..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-10 rounded-xl bg-slate-50 border-slate-200"
@@ -96,9 +119,47 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                     </div>
                 </div>
 
-                <div className="flex gap-2 w-full md:w-auto">
-                    <AddCategoryDialog storeId={storeId}/>
-                    <AddItemDialog storeId={storeId} categories={categories}/>
+                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                        <AddCategoryDialog storeId={storeId}/>
+                        <div className="w-full sm:w-auto [&_button]:w-full">
+                            {hasCategories ? (
+                                <AddItemDialog storeId={storeId} categories={categories}/>
+                            ) : (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                aria-disabled="true"
+                                                onClick={handleUnavailableAdd}
+                                                className="bg-slate-300 text-slate-600 rounded-lg cursor-not-allowed hover:bg-slate-300 opacity-80"
+                                            >
+                                                Ajouter un élément
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Ajoutez d&#39;abord une catégorie pour créer un élément.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                        </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-xl border bg-white p-3">
+                    <p className="text-xs text-slate-500">Total d&apos;éléments</p>
+                    <p className="text-lg font-bold text-slate-900">{totalItems}</p>
+                </div>
+                <div className="rounded-xl border bg-white p-3">
+                    <p className="text-xs text-slate-500">Actifs</p>
+                    <p className="text-lg font-bold text-emerald-600">{activeItems}</p>
+                </div>
+                <div className="rounded-xl border bg-white p-3">
+                    <p className="text-xs text-slate-500">Masqués</p>
+                    <p className="text-lg font-bold text-slate-500">{inactiveItems}</p>
                 </div>
             </div>
 
@@ -109,9 +170,9 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                             className="h-16 w-16 bg-white rounded-full flex items-center justify-center shadow-sm mx-auto mb-4">
                             <LayoutGrid className="h-8 w-8 text-indigo-300"/>
                         </div>
-                        <h3 className="text-lg font-bold text-slate-900">Catalogue vide</h3>
+                        <h3 className="text-lg font-bold text-slate-900">Aucun élément pour le moment</h3>
                         <p className="text-slate-500 mb-6 max-w-xs mx-auto">
-                            Commencez par ajouter une catégorie pour structurer votre catalogue.
+                            Créez une catégorie puis ajoutez vos éléments.
                         </p>
                     </div>
                 ) : (
@@ -140,7 +201,7 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                                 {categoryItems.length === 0 ? (
                                     <div
                                         className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-400 text-sm italic">
-                                        Cette catégorie est vide.
+                                        Aucun élément dans cette catégorie.
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -197,13 +258,13 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                                                                 </span>
                                                             )}
                                                             <span
-                                                                className="text-lg font-bold text-indigo-600">{item.price}€</span>
+                                                                className="text-lg font-bold text-indigo-600">{formatPrice(item.price)}</span>
                                                         </div>
                                                         <div className="flex gap-2">
                                                             {item.duration && (
                                                                 <Badge variant="outline"
                                                                        className="text-[10px] h-5 px-1.5 gap-1 text-slate-500 border-slate-200">
-                                                                    <Clock className="h-3 w-3"/> {item.duration}
+                                                                    <Clock className="h-3 w-3"/> {item.duration} min
                                                                 </Badge>
                                                             )}
                                                         </div>

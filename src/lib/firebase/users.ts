@@ -8,8 +8,8 @@ import {
     startAfter,
     getDocs,
     updateDoc,
+    deleteDoc,
     where,
-    writeBatch,
     QueryDocumentSnapshot,
     DocumentData,
     Timestamp,
@@ -18,6 +18,7 @@ import {ref, deleteObject} from "firebase/storage";
 import {deleteUser, User} from "firebase/auth";
 import {UserDoc, SubscriptionPlan, SubscriptionStatus} from "@/types/user";
 import {Store} from "@/types/store";
+import {deleteStore} from "@/lib/firebase/store";
 
 export interface AdminUserView extends UserDoc {
     stores: Store[];
@@ -105,49 +106,12 @@ export const deleteAccount = async (user: User) => {
     const storesQuery = query(collection(db, "stores"), where("userId", "==", user.uid));
     const storesSnapshot = await getDocs(storesQuery);
 
-    const storeIds = storesSnapshot.docs.map((d) => d.id);
-
-    if (storeIds.length > 0) {
-        for (const storeId of storeIds) {
-            const categoriesQuery = query(collection(db, "categories"), where("storeId", "==", storeId));
-            const categoriesSnapshot = await getDocs(categoriesQuery);
-
-            const itemsQuery = query(collection(db, "items"), where("storeId", "==", storeId));
-            const itemsSnapshot = await getDocs(itemsQuery);
-
-            const batch = writeBatch(db);
-
-            categoriesSnapshot.forEach((doc) => {
-                batch.delete(doc.ref);
-            });
-
-            for (const itemDoc of itemsSnapshot.docs) {
-                const itemData = itemDoc.data();
-                if (itemData.imageUrl) {
-                    try {
-                        const imageRef = ref(storage, itemData.imageUrl);
-                        await deleteObject(imageRef);
-                    } catch (error) {
-                        console.error("Failed to delete item image:", error);
-                    }
-                }
-                batch.delete(itemDoc.ref);
-            }
-
-            await batch.commit();
-        }
+    for (const storeDoc of storesSnapshot.docs) {
+        await deleteStore(storeDoc.id);
     }
 
-    const finalBatch = writeBatch(db);
-
-    storesSnapshot.forEach((doc) => {
-        finalBatch.delete(doc.ref);
-    });
-
     const userRef = doc(db, "users", user.uid);
-    finalBatch.delete(userRef);
-
-    await finalBatch.commit();
+    await deleteDoc(userRef);
 
     if (user.photoURL) {
         try {

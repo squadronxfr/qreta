@@ -1,12 +1,11 @@
 "use client";
-
-// TODO : Debug le non fonctionnement du bouton annuler dans la modale de création de boutique (le state open ne se remet pas à false)
 import React, {useState} from "react";
 import {useAuthStore} from "@/providers/auth-store-provider";
 import {createStore} from "@/lib/firebase/store";
 import {Button} from "@/components/ui/button";
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
@@ -78,7 +77,7 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
 
     if (isQuotaReached) {
         return (
-            <Dialog>
+            <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                     <Button className="rounded-xl opacity-80" variant="outline">
                         <Lock className="mr-2 h-4 w-4"/> Nouvelle Boutique
@@ -104,9 +103,11 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl">
-                            Annuler
-                        </Button>
+                        <DialogClose asChild>
+                            <Button variant="outline" className="rounded-xl">
+                                Annuler
+                            </Button>
+                        </DialogClose>
                         <Button asChild className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white">
                             <Link href="/billing">Voir les offres</Link>
                         </Button>

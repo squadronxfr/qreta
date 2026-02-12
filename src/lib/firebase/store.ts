@@ -1,18 +1,21 @@
-import {db} from "@/lib/firebase/config";
+import {db, storage} from "@/lib/firebase/config";
 import {
     collection,
     doc,
     addDoc,
     updateDoc,
-    deleteDoc,
     query,
     where,
+    getDoc,
+    getDocs,
     onSnapshot,
     Timestamp,
     Unsubscribe,
+    writeBatch,
 } from "firebase/firestore";
 import {Store} from "@/types/store";
 import {generateSlug, checkSlugAvailability} from "@/lib/utils/slug";
+import {deleteObject, ref} from "firebase/storage";
 
 interface CreateStoreData {
     name: string;
@@ -53,7 +56,52 @@ export const updateStore = async (
 };
 
 export const deleteStore = async (storeId: string): Promise<void> => {
-    await deleteDoc(doc(db, "stores", storeId));
+    const storeRef = doc(db, "stores", storeId);
+    const storeSnap = await getDoc(storeRef);
+
+    const [categoriesSnap, itemsSnap] = await Promise.all([
+        getDocs(query(collection(db, "categories"), where("storeId", "==", storeId))),
+        getDocs(query(collection(db, "items"), where("storeId", "==", storeId))),
+    ]);
+
+    for (const itemDoc of itemsSnap.docs) {
+        const imageUrl = itemDoc.data().imageUrl as string | undefined;
+        if (imageUrl) {
+            await deleteObject(ref(storage, imageUrl)).catch(() => null);
+        }
+    }
+
+    if (storeSnap.exists()) {
+        const data = storeSnap.data() as Partial<Store>;
+        if (data.logoUrl) {
+            await deleteObject(ref(storage, data.logoUrl)).catch(() => null);
+        }
+        if (data.bannerUrl) {
+            await deleteObject(ref(storage, data.bannerUrl)).catch(() => null);
+        }
+    }
+
+    const docsToDelete = [...itemsSnap.docs, ...categoriesSnap.docs];
+    const BATCH_LIMIT = 450;
+    let batch = writeBatch(db);
+    let count = 0;
+
+    for (const docSnap of docsToDelete) {
+        batch.delete(docSnap.ref);
+        count++;
+        if (count >= BATCH_LIMIT) {
+            await batch.commit();
+            batch = writeBatch(db);
+            count = 0;
+        }
+    }
+
+    batch.delete(storeRef);
+    count++;
+
+    if (count > 0) {
+        await batch.commit();
+    }
 };
 
 export const subscribeToUserStores = (

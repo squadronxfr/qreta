@@ -6,7 +6,7 @@ import {Spinner} from "@/components/ui/spinner";
 import {Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter} from "@/components/ui/card";
 import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
-import {Store as StoreIcon, ExternalLink, Package} from "lucide-react";
+import {Store as StoreIcon, ExternalLink, Briefcase, Box, Layers, CalendarDays} from "lucide-react";
 import Link from "next/link";
 
 export default function StoresPage() {
@@ -45,14 +45,24 @@ export default function StoresPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {stores.map((store) => {
                         const counts = countsMap[store.id];
+                        const servicesCount = counts?.services ?? 0;
+                        const productsCount = counts?.products ?? 0;
+                        const totalCount = servicesCount + productsCount;
+                        const updatedAt =
+                            typeof (store.updatedAt as { toDate?: () => Date })?.toDate === "function"
+                                ? (store.updatedAt as { toDate: () => Date }).toDate()
+                                : null;
+                        const updatedLabel = updatedAt
+                            ? new Intl.DateTimeFormat("fr-FR", {day: "2-digit", month: "short"}).format(updatedAt)
+                            : null;
                         return (
                             <Link key={store.id} href={`/stores/${store.id}`} className="group block h-full">
                                 <Card
-                                    className="h-full border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-200 rounded-2xl overflow-hidden flex flex-col">
+                                    className="h-full bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-200 rounded-2xl overflow-hidden flex flex-col">
                                     <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4">
                                         <div className="flex justify-between items-start">
                                             <div
-                                                className="h-12 w-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-sm shrink-0 overflow-hidden">
+                                                className="h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0 overflow-hidden relative border-4 border-white">
                                                 {store.logoUrl ? (
                                                     <img
                                                         src={store.logoUrl}
@@ -60,9 +70,7 @@ export default function StoresPage() {
                                                         className="h-full w-full object-cover rounded-xl"
                                                     />
                                                 ) : (
-                                                    <span className="font-bold text-lg">
-                                                        {store.name.substring(0, 1).toUpperCase()}
-                                                    </span>
+                                                    <StoreIcon className="h-9 w-9"/>
                                                 )}
                                             </div>
                                             <Badge
@@ -88,22 +96,53 @@ export default function StoresPage() {
                                     </CardHeader>
 
                                     <CardContent className="pt-4 flex-1">
-                                        <div className="flex items-center gap-4 text-sm text-slate-500">
-                                            <div className="flex items-center gap-1.5">
-                                                <Package className="h-3.5 w-3.5"/>
-                                                <span>{counts?.services ?? 0} service{(counts?.services ?? 0) > 1 ? "s" : ""}</span>
+                                        <div className="space-y-2 text-sm">
+                                            <div
+                                                className="flex items-center justify-between rounded-lg bg-slate-50 px-2.5 py-2">
+                                                <div className="flex items-center gap-2 text-slate-600">
+                                                    <Briefcase className="h-3.5 w-3.5 text-slate-500"/>
+                                                    <span>Services</span>
+                                                </div>
+                                                <span className="font-medium text-slate-900">{servicesCount}</span>
                                             </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <Package className="h-3.5 w-3.5"/>
-                                                <span>{counts?.products ?? 0} produit{(counts?.products ?? 0) > 1 ? "s" : ""}</span>
+                                            <div
+                                                className="flex items-center justify-between rounded-lg bg-slate-50 px-2.5 py-2">
+                                                <div className="flex items-center gap-2 text-slate-600">
+                                                    <Box className="h-3.5 w-3.5 text-slate-500"/>
+                                                    <span>Produits</span>
+                                                </div>
+                                                <span className="font-medium text-slate-900">{productsCount}</span>
+                                            </div>
+                                            <div
+                                                className="flex items-center justify-between rounded-lg bg-slate-50 px-2.5 py-2">
+                                                <div className="flex items-center gap-2 text-slate-600">
+                                                    <Layers className="h-3.5 w-3.5 text-slate-500"/>
+                                                    <span>&Eacute;l&eacute;ments du catalogue</span>
+                                                </div>
+                                                <span className="font-medium text-slate-900">{totalCount}</span>
                                             </div>
                                         </div>
                                     </CardContent>
 
-                                    <CardFooter className="border-t border-slate-100 pt-3">
+                                    <CardFooter className="border-t border-slate-100 pt-3 flex items-center gap-3">
                                         <p className="text-xs text-slate-400 flex-1">/{store.slug}</p>
-                                        <Button variant="ghost" size="sm"
-                                                className="text-slate-400 group-hover:text-indigo-600">
+                                        {updatedLabel && (
+                                            <div className="text-[11px] text-slate-400 flex items-center gap-1">
+                                                <CalendarDays className="h-3 w-3"/>
+                                                <span>Mise à jour le {updatedLabel}</span>
+                                            </div>
+                                        )}
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-slate-400 group-hover:text-indigo-600"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                window.open(`/${store.slug}`, "_blank", "noopener,noreferrer");
+                                            }}
+                                        >
                                             <ExternalLink className="h-4 w-4"/>
                                         </Button>
                                     </CardFooter>

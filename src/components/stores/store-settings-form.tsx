@@ -3,7 +3,7 @@
 import {useState, SyntheticEvent, ChangeEvent, useRef, useEffect, MouseEvent} from "react";
 import {useRouter} from "next/navigation";
 import {db, storage} from "@/lib/firebase/config";
-import {doc, updateDoc, deleteDoc} from "firebase/firestore";
+import {doc, updateDoc} from "firebase/firestore";
 import {ref, uploadBytes, getDownloadURL, deleteObject} from "firebase/storage";
 import {Store} from "@/types/store";
 import {Button} from "@/components/ui/button";
@@ -33,6 +33,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {toast} from "sonner";
+import {deleteStore} from "@/lib/firebase/store";
 
 interface StoreSettingsFormProps {
     store: Store;
@@ -193,10 +194,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
     const handleDeleteStore = async () => {
         setLoading(true);
         try {
-            if (store.logoUrl) await deleteObject(ref(storage, store.logoUrl)).catch(() => null);
-            if (store.bannerUrl) await deleteObject(ref(storage, store.bannerUrl)).catch(() => null);
-
-            await deleteDoc(doc(db, "stores", store.id));
+            await deleteStore(store.id);
             router.push("/stores");
             router.refresh();
         } catch (error) {
@@ -549,18 +547,19 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
 
                 <div className="lg:col-span-8">
                     <Card className="border-red-100 bg-red-50/30 shadow-sm rounded-2xl mb-10">
-                        <CardHeader className="pb-4">
+                        <CardHeader>
                             <CardTitle className="text-lg font-heading text-red-700 flex items-center gap-2">
                                 <AlertTriangle className="h-5 w-5"/> Zone de danger
                             </CardTitle>
-                            <CardDescription className="text-red-600/80">
+                            <CardDescription className="text-red-700">
                                 La suppression de la boutique est définitive et irréversible.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <p className="text-sm text-red-700">
-                                    Toutes les données (produits, catégories, images) seront perdues.
+                                    Une fois que vous aurez supprimé votre boutique, toutes les données associées seront
+                                    perdues et ne pourront pas être récupérées.
                                 </p>
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
@@ -571,7 +570,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
-                                            <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
+                                            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
                                             <AlertDialogDescription>
                                                 Cette action est irréversible. Elle supprimera définitivement votre
                                                 boutique <strong>{store.name}</strong> et toutes les données associées.

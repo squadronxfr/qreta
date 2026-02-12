@@ -1,7 +1,4 @@
 "use client";
-// TODO 1 : Corriger la modal d'edition car pas de valeur a null par default dans produit (car produit n'as pas de duration) et ca fait planter la modale d'edition de produit
-// TODO 2 : Le champs duration n'apparait pas quand j'edite un service => cause :Erreur mise à jour: FirebaseError: Function updateDoc() called with invalid data. Unsupported field value: undefined (found in field duration in document items/JSM3noyQj057LNCqJXYi)
-
 import {useState, SyntheticEvent, ChangeEvent, useRef} from "react";
 import {createItem} from "@/lib/firebase/items";
 import {
@@ -23,6 +20,7 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Textarea} from "@/components/ui/textarea";
 import {Checkbox} from "@/components/ui/checkbox";
+import {Switch} from "@/components/ui/switch";
 import {Plus, ImageIcon} from "lucide-react";
 import {Spinner} from "@/components/ui/spinner";
 import {Category} from "@/types/store";
@@ -46,7 +44,8 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
         categoryId: "",
         type: "service" as "product" | "service",
         isStartingPrice: false,
-        duration: 0,
+        hasDuration: false,
+        duration: null as number | null,
     });
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -64,6 +63,12 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
 
         setLoading(true);
         try {
+            if (formData.type === "service" && formData.hasDuration && formData.duration === null) {
+                toast.error("Veuillez renseigner une durée valide en minutes.");
+                setLoading(false);
+                return;
+            }
+
             await createItem(
                 {
                     storeId,
@@ -73,7 +78,7 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
                     price: parseFloat(formData.price) || 0,
                     type: formData.type,
                     isStartingPrice: formData.isStartingPrice,
-                    duration: formData.duration || null,
+                    duration: formData.type === "service" && formData.hasDuration ? formData.duration : null,
                 },
                 imageFile
             );
@@ -85,7 +90,8 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
                 categoryId: "",
                 type: "service",
                 isStartingPrice: false,
-                duration: 0,
+                hasDuration: false,
+                duration: null,
             });
             setImageFile(null);
             if (fileInputRef.current) fileInputRef.current.value = "";
@@ -101,19 +107,26 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 rounded-lg">
-                    <Plus className="mr-2 h-4 w-4"/> Nouveau Produit / Service
+                    <Plus className="mr-2 h-4 w-4"/> Ajouter un élément
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-2xl">
                 <DialogHeader>
-                    <DialogTitle className="font-heading">Nouveau Produit / Service</DialogTitle>
+                    <DialogTitle className="font-heading">Ajouter un élément</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-5 py-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>Type</Label>
-                            <Select onValueChange={(v: "product" | "service") => setFormData({...formData, type: v})}
-                                    defaultValue="service">
+                            <Select
+                                onValueChange={(v: "product" | "service") => setFormData({
+                                    ...formData,
+                                    type: v,
+                                    hasDuration: v === "service" ? formData.hasDuration : false,
+                                    duration: v === "service" ? formData.duration : null,
+                                })}
+                                defaultValue="service"
+                            >
                                 <SelectTrigger className="rounded-xl"><SelectValue/></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="service">Service</SelectItem>
@@ -176,16 +189,43 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
                     </div>
 
                     {formData.type === "service" && (
-                        <div className="space-y-2">
-                            <Label htmlFor="item-duration">Dur&eacute;e en minutes</Label>
-                            <Input
-                                id="item-duration"
-                                placeholder="Ex: 30 pour 30 minutes"
-                                type="number"
-                                value={formData.duration}
-                                onChange={(e) => setFormData({...formData, duration: parseInt(e.target.value) || 0})}
-                                className="rounded-xl"
-                            />
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between rounded-xl border border-slate-200 p-3">
+                                <div className="space-y-0.5">
+                                    <Label htmlFor="enable-duration">Ajouter une durée</Label>
+                                    <p className="text-xs text-slate-500">Optionnel pour les services.</p>
+                                </div>
+                                <Switch
+                                    id="enable-duration"
+                                    checked={formData.hasDuration}
+                                    onCheckedChange={(checked) => setFormData({
+                                        ...formData,
+                                        hasDuration: checked,
+                                        duration: checked ? formData.duration : null,
+                                    })}
+                                />
+                            </div>
+
+                            {formData.hasDuration && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="item-duration">Dur&eacute;e en minutes</Label>
+                                    <Input
+                                        id="item-duration"
+                                        placeholder="Ex: 30 pour 30 minutes"
+                                        type="number"
+                                        min={1}
+                                        value={formData.duration ?? ""}
+                                        onChange={(e) => {
+                                            const parsed = parseInt(e.target.value, 10);
+                                            setFormData({
+                                                ...formData,
+                                                duration: Number.isFinite(parsed) && parsed > 0 ? parsed : null
+                                            });
+                                        }}
+                                        className="rounded-xl"
+                                    />
+                                </div>
+                            )}
                         </div>
                     )}
 

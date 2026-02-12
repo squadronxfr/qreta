@@ -42,6 +42,15 @@ interface EditItemDialogProps {
     onOpenChange: (open: boolean) => void;
 }
 
+const parseDurationValue = (value: unknown): number | null => {
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) return value;
+    if (typeof value === "string") {
+        const parsed = parseInt(value, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    }
+    return null;
+};
+
 export function EditItemDialog({item, categories, open, onOpenChange}: EditItemDialogProps) {
     const userData = useAuthStore((s) => s.userData);
     const [loading, setLoading] = useState<boolean>(false);
@@ -52,6 +61,8 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
     const userPlanKey = (userData?.subscription?.plan as PlanKey) || "free";
     const canManageAvailability = userPlanKey !== "free";
 
+    const initialDuration = parseDurationValue(item.duration);
+
     const [formData, setFormData] = useState({
         name: item.name,
         description: item.description,
@@ -59,12 +70,14 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
         categoryId: item.categoryId,
         type: item.type,
         isStartingPrice: item.isStartingPrice,
-        duration: item.duration || "",
+        hasDuration: item.type === "service" && initialDuration !== null,
+        duration: initialDuration,
         isActive: item.isActive ?? true
     });
 
     useEffect(() => {
         if (open) {
+            const nextDuration = parseDurationValue(item.duration);
             setFormData({
                 name: item.name,
                 description: item.description,
@@ -72,7 +85,8 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                 categoryId: item.categoryId,
                 type: item.type,
                 isStartingPrice: item.isStartingPrice,
-                duration: item.duration || "",
+                hasDuration: item.type === "service" && nextDuration !== null,
+                duration: nextDuration,
                 isActive: item.isActive ?? true
             });
             setPreviewUrl(item.imageUrl || null);
@@ -104,6 +118,11 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
         setLoading(true);
 
         try {
+            if (formData.type === "service" && formData.hasDuration && formData.duration === null) {
+                toast.error("Veuillez renseigner une durée valide en minutes.");
+                setLoading(false);
+                return;
+            }
 
             await updateItem(
                 item.id,
@@ -115,7 +134,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                     categoryId: formData.categoryId,
                     type: formData.type,
                     isStartingPrice: formData.isStartingPrice,
-                    duration: formData.duration || undefined,
+                    duration: formData.type === "service" && formData.hasDuration ? formData.duration : null,
                     isActive: formData.isActive,
                     imageUrl: item.imageUrl,
                 },
@@ -149,7 +168,12 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                             <Label>Type</Label>
                             <Select
                                 value={formData.type}
-                                onValueChange={(v: "product" | "service") => setFormData({...formData, type: v})}
+                                onValueChange={(v: "product" | "service") => setFormData({
+                                    ...formData,
+                                    type: v,
+                                    hasDuration: v === "service" ? formData.hasDuration : false,
+                                    duration: v === "service" ? formData.duration : null
+                                })}
                             >
                                 <SelectTrigger className="rounded-xl"><SelectValue/></SelectTrigger>
                                 <SelectContent>
@@ -202,6 +226,47 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                             </label>
                         </div>
                     </div>
+
+                    {formData.type === "service" && (
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between rounded-xl border border-slate-200 p-3">
+                                <div className="space-y-0.5">
+                                    <Label htmlFor="edit-enable-duration">Ajouter une durée</Label>
+                                    <p className="text-xs text-slate-500">Optionnel pour les services.</p>
+                                </div>
+                                <Switch
+                                    id="edit-enable-duration"
+                                    checked={formData.hasDuration}
+                                    onCheckedChange={(checked) => setFormData({
+                                        ...formData,
+                                        hasDuration: checked,
+                                        duration: checked ? formData.duration : null
+                                    })}
+                                />
+                            </div>
+
+                            {formData.hasDuration && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-duration">Dur&eacute;e en minutes</Label>
+                                    <Input
+                                        id="edit-duration"
+                                        type="number"
+                                        min={1}
+                                        placeholder="Ex: 30 pour 30 minutes"
+                                        value={formData.duration ?? ""}
+                                        onChange={(e) => {
+                                            const parsed = parseInt(e.target.value, 10);
+                                            setFormData({
+                                                ...formData,
+                                                duration: Number.isFinite(parsed) && parsed > 0 ? parsed : null
+                                            });
+                                        }}
+                                        className="rounded-xl"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <div
                         className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">

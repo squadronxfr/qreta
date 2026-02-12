@@ -12,7 +12,8 @@ import {
     Unsubscribe,
 } from "firebase/firestore";
 import {Item} from "@/types/store";
-import {uploadFile, deleteFile} from "@/lib/firebase/storage";
+import {storage} from "@/lib/firebase/config";
+import {deleteObject, getDownloadURL, ref, uploadBytes} from "firebase/storage";
 
 interface CreateItemData {
     storeId: string;
@@ -34,7 +35,9 @@ export const createItem = async (
     if (imageFile) {
         const ext = imageFile.name.split(".").pop();
         const path = `items/${data.storeId}/${Date.now()}.${ext}`;
-        imageUrl = await uploadFile(path, imageFile);
+        const imageRef = ref(storage, path);
+        await uploadBytes(imageRef, imageFile);
+        imageUrl = await getDownloadURL(imageRef);
     }
     const itemData = {
         ...data,
@@ -63,14 +66,16 @@ export const updateItem = async (
     const updates: Record<string, unknown> = {...data};
 
     if (shouldRemoveImage && data.imageUrl) {
-        await deleteFile(data.imageUrl);
+        await deleteObject(ref(storage, data.imageUrl)).catch(() => null);
         updates.imageUrl = "";
     }
 
     if (imageFile) {
         const ext = imageFile.name.split(".").pop();
         const path = `items/${storeId}/${Date.now()}.${ext}`;
-        updates.imageUrl = await uploadFile(path, imageFile);
+        const imageRef = ref(storage, path);
+        await uploadBytes(imageRef, imageFile);
+        updates.imageUrl = await getDownloadURL(imageRef);
     }
 
     await updateDoc(doc(db, "items", itemId), updates);
@@ -78,7 +83,7 @@ export const updateItem = async (
 
 export const deleteItem = async (item: Pick<Item, "id" | "imageUrl">): Promise<void> => {
     if (item.imageUrl) {
-        await deleteFile(item.imageUrl);
+        await deleteObject(ref(storage, item.imageUrl)).catch(() => null);
     }
     await deleteDoc(doc(db, "items", item.id));
 };
