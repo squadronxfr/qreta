@@ -129,7 +129,7 @@ export default function StoresPage() {
                                         {updatedLabel && (
                                             <div className="text-[11px] text-slate-400 flex items-center gap-1">
                                                 <CalendarDays className="h-3 w-3"/>
-                                                <span>Mise à jour le {updatedLabel}</span>
+                                                <span>Mis à jour le {updatedLabel}</span>
                                             </div>
                                         )}
                                         <Button
