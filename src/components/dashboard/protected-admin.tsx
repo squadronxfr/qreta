@@ -1,5 +1,4 @@
 "use client";
-// TODO : changer la facon dont est gérer la protection de la route admin
 import {useEffect, ReactNode} from "react";
 import {useAuthStore} from "@/providers/auth-store-provider";
 import {useRouter} from "next/navigation";

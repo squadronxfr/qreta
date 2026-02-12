@@ -1,4 +1,3 @@
-// TODO : pour la suppression d'un utilisateur j'utilise une fonction custom mais voir si il n'existe pas une fonction native a firebase pour supprimer un utilisateur et toutes ses données
 import {createStore} from "zustand";
 import {
     onAuthStateChanged,
