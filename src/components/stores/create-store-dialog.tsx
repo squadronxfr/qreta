@@ -1,7 +1,7 @@
 "use client";
 import React, {useState} from "react";
 import {useAuthStore} from "@/providers/auth-store-provider";
-import {createStore} from "@/lib/firebase/store";
+import {createStoreAction} from "@/actions/store";
 import {Button} from "@/components/ui/button";
 import {
     Dialog,
@@ -46,30 +46,31 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
         if (!user) return;
 
         if (name.length < 2) {
-            toast.error("Le nom est trop court", {
-                description: "Le nom de la boutique doit contenir au moins 2 caractères."
-            });
+            toast.error("Le nom est trop court");
             return;
         }
 
         setLoading(true);
 
         try {
-            const storeId = await createStore(user.uid, {name, description});
+            const result = await createStoreAction(user.uid, name, description);
 
-            toast.success("Boutique créée !", {
-                description: "Votre espace de vente est prêt à être configuré."
-            });
-
-            setOpen(false);
-            setName("");
-            setDescription("");
-            router.push(`/stores/${storeId}`);
+            if (result.success && result.storeId) {
+                toast.success("Catalogue créé !", {
+                    description: "Votre espace est prêt."
+                });
+                setOpen(false);
+                setName("");
+                setDescription("");
+                router.push(`/stores/${result.storeId}`);
+            } else {
+                toast.error("Erreur", {
+                    description: result.error || "Une erreur est survenue."
+                });
+            }
         } catch (err) {
             console.error(err);
-            toast.error("Erreur de création", {
-                description: "Une erreur est survenue lors de la création de la boutique."
-            });
+            toast.error("Erreur système");
         } finally {
             setLoading(false);
         }
