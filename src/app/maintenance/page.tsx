@@ -45,7 +45,7 @@ export default function MaintenancePage() {
 
                 {/* Titre simple et français */}
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
-                    <SplitText text="La plateforme en cours de développement"/>
+                    <SplitText text="La plateforme est en cours de développement"/>
                 </h1>
 
                 <p className="text-slate-400 text-lg mb-10 max-w-md">
