@@ -1,4 +1,3 @@
-import {adminDb} from "@/lib/firebase/admin";
 import {getAuth} from "firebase-admin/auth";
 import {getApps} from "firebase-admin/app";
 

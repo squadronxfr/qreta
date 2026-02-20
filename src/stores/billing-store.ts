@@ -35,7 +35,7 @@ const getAuthHeaders = async (user: User): Promise<Record<string, string>> => {
 };
 
 export const createBillingStore = () => {
-    return createStore<BillingStore>((set, get) => ({
+    return createStore<BillingStore>((set) => ({
         invoices: [],
         isLoadingInvoices: false,
         isProcessing: null,
@@ -93,14 +93,34 @@ export const createBillingStore = () => {
 
             try {
                 const headers = await getAuthHeaders(user);
+
+                const isPaidPlanKey = (k: string): k is Exclude<PlanKey, "free"> => k === "starter" || k === "pro";
+
+                const body: {
+                    userId: string;
+                    returnUrl: string;
+                    action?: "cancel";
+                    priceId?: string;
+                } = {
+                    userId: user.uid,
+                    returnUrl,
+                };
+
+                if (sourceKey === "cancel") {
+                    body.action = "cancel";
+                } else if (isPaidPlanKey(sourceKey)) {
+                    const priceId = SUBSCRIPTION_PLANS[sourceKey].priceId;
+                    body.priceId = priceId;
+                }
+
                 const res = await fetch("/api/stripe/portal", {
                     method: "POST",
                     headers,
-                    body: JSON.stringify({userId: user.uid, returnUrl}),
+                    body: JSON.stringify(body),
                 });
 
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error);
+                if (!res.ok) throw new Error(data.error || "Erreur Portal");
 
                 window.location.href = data.url;
             } catch (error) {
@@ -109,6 +129,7 @@ export const createBillingStore = () => {
                 throw error;
             }
         },
+
 
         reset: () => {
             set({invoices: [], isLoadingInvoices: false, isProcessing: null});

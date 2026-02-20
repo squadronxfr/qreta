@@ -35,15 +35,22 @@ export function useBilling() {
 
         try {
             if (isSubscribed && hasStripeId) {
+                if (targetPlanKey === currentPlanKey) {
+                    await handlePortalStore(user, "cancel", window.location.href);
+                    return;
+                }
+
                 await handlePortalStore(user, targetPlanKey, window.location.href);
-            } else {
-                await handleCheckoutStore(user, targetPlanKey, window.location.href);
+                return;
             }
+
+            await handleCheckoutStore(user, targetPlanKey, window.location.href);
         } catch (error) {
             console.error("Plan action error:", error);
             toast.error(isSubscribed ? "Impossible d'accéder au portail." : "Impossible d'initialiser le paiement.");
         }
     };
+
 
     const handlePortal = async (sourceKey: string = "portal_main") => {
         if (!user) return;
