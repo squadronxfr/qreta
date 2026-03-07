@@ -5,7 +5,8 @@ export const SUBSCRIPTION_PLANS = {
         price: 0,
         priceId: null,
         quota: 1,
-        features: ["1 Boutique", "Produits & Services illimités", "QR Code", "Branding Qreta"],
+        description: "L'essentiel pour lancer votre vitrine digitale sans frais.",
+        features: ["1 Catalogue", "Produits & Services illimités", "QR Code", "Branding Qreta"],
     },
     starter: {
         key: "starter",
@@ -13,7 +14,8 @@ export const SUBSCRIPTION_PLANS = {
         price: 9,
         priceId: "price_1SyqH59mcp2EBniB2SH5CoGX",
         quota: 3,
-        features: ["Tous les avantages Free", "3 Boutiques", "Gestion de l'affichage", "Branding Qreta"],
+        description: "La solution idéale pour professionnaliser votre activité.",
+        features: ["Tous les avantages Free", "3 Catalogues", "Gestion de l'affichage", "Branding Qreta"],
     },
     pro: {
         key: "pro",
@@ -21,7 +23,8 @@ export const SUBSCRIPTION_PLANS = {
         price: 19,
         priceId: "price_1SyqG69mcp2EBniBjqYnoCFL",
         quota: Infinity,
-        features: ["Tous les avantages Starter", "Boutiques illimitées", "Marque blanche", "Support"],
+        description: "L'outil ultime pour le sur-mesure et le multi-boutiques.",
+        features: ["Tous les avantages Starter", "Catalogues illimitées", "Marque blanche", "Support"],
     },
 } as const;
 
