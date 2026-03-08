@@ -851,12 +851,27 @@ export default function LandingPage() {
                         <div>
                             <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Légal</h4>
                             <div className="space-y-3">
-                                <Link href="/terms" className="block text-sm hover:text-indigo-400 transition-colors">Conditions
-                                    d&apos;utilisation</Link>
-                                <Link href="/privacy"
-                                      className="block text-sm hover:text-indigo-400 transition-colors">Confidentialité</Link>
-                                <a href="mailto:hello@qreta.io"
-                                   className="block text-sm hover:text-indigo-400 transition-colors">Support</a>
+                                <Link href="/terms"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="block text-sm transition-colors hover:text-indigo-400"
+                                >
+                                    Conditions générales d&apos;utilisation
+                                </Link>
+                                <Link
+                                    href="/privacy"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block text-sm hover:text-indigo-400 transition-colors"
+                                >
+                                    Politique de confidentialité
+                                </Link>
+                                <Link
+                                    href="/contact"
+                                    className="block text-sm hover:text-indigo-400 transition-colors"
+                                >
+                                    Support
+                                </Link>
                             </div>
                         </div>
                     </div>
