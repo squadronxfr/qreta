@@ -292,7 +292,7 @@ export function ProfileForm() {
                     <CardContent
                         className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <p className="text-sm text-slate-600">
-                            La suppression de votre compte est définitive. Toutes vos boutiques et données seront
+                            La suppression de votre compte est définitive. Tous vos catalogues et données seront
                             effacées.
                         </p>
                         <AlertDialog open={showDialog} onOpenChange={setShowDialog}>

@@ -23,7 +23,7 @@ export const SUBSCRIPTION_PLANS = {
         price: 19,
         priceId: "price_1SyqG69mcp2EBniBjqYnoCFL",
         quota: Infinity,
-        description: "L'outil ultime pour le sur-mesure et le multi-boutiques.",
+        description: "L'outil ultime pour le sur-mesure et le multi-catalogues.",
         features: ["Tous les avantages Starter", "Catalogues illimitées", "Marque blanche", "Support"],
     },
 } as const;

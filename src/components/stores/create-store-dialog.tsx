@@ -79,7 +79,7 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                     <Button className="rounded-xl opacity-80" variant="outline">
-                        <Lock className="mr-2 h-4 w-4"/> Nouvelle Boutique
+                        <Lock className="h-4 w-4"/>Nouveau Catalogue
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-106.25 rounded-2xl">
@@ -91,12 +91,12 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
                             Limite atteinte
                         </DialogTitle>
                         <DialogDescription>
-                            Votre plan <strong>{plan.name}</strong> ne permet de gérer que {plan.quota} boutique(s).
+                            Votre plan <strong>{plan.name}</strong> ne permet de gérer que {plan.quota} catalogue(s).
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4 text-center space-y-4">
                         <p className="text-sm text-slate-500">
-                            Passez au plan supérieur pour débloquer plus de boutiques et de fonctionnalités.
+                            Passez au plan supérieur pour débloquer plus de catalogues et de fonctionnalités.
                         </p>
                     </div>
                     <DialogFooter>
@@ -116,7 +116,7 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200">
-                    <Plus className="mr-2 h-4 w-4"/> Nouvelle Boutique
+                    <Plus className="h-4 w-4"/>Nouveau Catalogue
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-106.25 rounded-2xl">
@@ -126,7 +126,7 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
                             <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
                                 <StoreIcon className="h-5 w-5"/>
                             </div>
-                            Créer une boutique
+                            Créer un catalogue
                         </DialogTitle>
                         <DialogDescription>
                             Configurez les informations de base de votre nouvel établissement.
@@ -162,7 +162,7 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
                             className="rounded-xl w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white"
                         >
                             {loading && <Spinner className="mr-2 h-4 w-4"/>}
-                            Créer la boutique
+                            Créer mon catalogue
                         </Button>
                     </DialogFooter>
                 </form>

@@ -1,7 +1,7 @@
 "use client";
 
-import React, {useState, SyntheticEvent} from "react";
-import {createUserWithEmailAndPassword, updateProfile} from "firebase/auth";
+import {useState, SyntheticEvent} from "react";
+import {createUserWithEmailAndPassword, updateProfile, sendEmailVerification} from "firebase/auth";
 import {FirebaseError} from "firebase/app";
 import {doc, setDoc, serverTimestamp} from "firebase/firestore";
 import {auth, db} from "@/lib/firebase/config";
@@ -9,6 +9,7 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Alert, AlertDescription} from "@/components/ui/alert";
+import {Checkbox} from "@/components/ui/checkbox";
 import {ArrowRight, ArrowLeft, Check} from "lucide-react";
 import {Spinner} from "@/components/ui/spinner";
 import Link from "next/link";
@@ -17,6 +18,7 @@ import {useRouter} from "next/navigation";
 export default function SignupPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
     const router = useRouter();
 
     const [formData, setFormData] = useState({
@@ -36,6 +38,12 @@ export default function SignupPage() {
         e.preventDefault();
         setIsLoading(true);
         setError(null);
+
+        if (!acceptedTerms) {
+            setError("Vous devez accepter les conditions générales d'utilisation.");
+            setIsLoading(false);
+            return;
+        }
 
         if (formData.password !== formData.confirmPassword) {
             setError("Les mots de passe ne correspondent pas.");
@@ -72,7 +80,8 @@ export default function SignupPage() {
                 updatedAt: serverTimestamp(),
             });
 
-            router.push("/stores");
+            await sendEmailVerification(user);
+            router.push("/verify-email");
         } catch (err: unknown) {
             if (err instanceof FirebaseError) {
                 switch (err.code) {
@@ -111,9 +120,9 @@ export default function SignupPage() {
 
                 <div className="text-center mb-10">
                     <Link href="/">
-            <span className="font-heading text-3xl font-bold tracking-tight text-slate-900">
-              Qreta<span className="text-indigo-600">.</span>
-            </span>
+                        <span className="font-heading text-3xl font-bold tracking-tight text-slate-900">
+                            Qreta<span className="text-indigo-600">.</span>
+                        </span>
                     </Link>
                     <h1 className="text-2xl font-bold text-slate-900 mt-6 mb-2">Créer un compte</h1>
                     <p className="text-slate-500 text-sm">Commencez gratuitement votre catalogue digital</p>
@@ -185,6 +194,30 @@ export default function SignupPage() {
                             />
                         </div>
 
+                        <div className="flex items-start gap-3 pt-1">
+                            <Checkbox
+                                id="terms"
+                                checked={acceptedTerms}
+                                onCheckedChange={(checked) => {
+                                    setAcceptedTerms(checked === true);
+                                    setError(null);
+                                }}
+                                className="mt-0.5"
+                            />
+                            <Label htmlFor="terms"
+                                   className="text-sm text-slate-600 leading-relaxed font-normal cursor-pointer">
+                                J&apos;accepte les{" "}
+                                <Link
+                                    href="/terms"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2"
+                                >
+                                    conditions générales d&apos;utilisation
+                                </Link>
+                            </Label>
+                        </div>
+
                         {error && (
                             <Alert variant="destructive" className="bg-red-50 text-red-900 border-red-200 rounded-xl">
                                 <AlertDescription>{error}</AlertDescription>
@@ -193,13 +226,13 @@ export default function SignupPage() {
 
                         <Button
                             type="submit"
-                            className="w-full h-11 rounded-xl bg-linear-to-r bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-all shadow-md shadow-indigo-500/20"
+                            className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-all shadow-md shadow-indigo-500/20"
                             disabled={isLoading}
                         >
                             {isLoading ? (
                                 <><Spinner className="mr-2 h-4 w-4"/> Création en cours...</>
                             ) : (
-                                <>S&#39;inscrire <ArrowRight className="ml-2 h-4 w-4"/></>
+                                <>S&apos;inscrire <ArrowRight className="ml-2 h-4 w-4"/></>
                             )}
                         </Button>
                     </form>
@@ -209,7 +242,7 @@ export default function SignupPage() {
                             gratuitement</p>
                         <div className="flex flex-col gap-2.5">
                             {[
-                                "1 Boutique gratuite à vie",
+                                "1 Catalogue gratuite à vie",
                                 "Produits illimités",
                                 "QR Code généré automatiquement",
                             ].map((feature) => (

@@ -38,7 +38,7 @@ export async function createStoreAction(idToken: string, name: string, descripti
         if (currentStoreCount >= plan.quota) {
             return {
                 success: false,
-                error: `Votre plan ${plan.name} est limité à ${plan.quota} boutique(s).`
+                error: `Votre plan ${plan.name} est limité à ${plan.quota} catalogue(s).`
             };
         }
 

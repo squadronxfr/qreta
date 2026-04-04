@@ -262,7 +262,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
             setBannerFile(null);
             setShouldRemoveLogo(false);
             setShouldRemoveBanner(false);
-            toast.success("Les paramètres de la boutique ont été mis à jour avec succès !");
+            toast.success("Les paramètres de du ctalogue ont été mis à jour avec succès !");
             setSuccess(true);
 
             setTimeout(() => setSuccess(false), 2000);
@@ -278,16 +278,14 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
         <div className="max-w-6xl mx-auto space-y-6">
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-                {/* --- BLOC 1 : FORMULAIRES PRINCIPAUX (Reste à gauche sur Desktop, Premier sur Mobile) --- */}
                 <div className="lg:col-span-8 space-y-8">
                     <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-                        {/* ... Contenu Identité & Visibilité (inchangé) ... */}
                         <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <CardTitle className="text-lg font-heading">Identité & Visibilité</CardTitle>
                                     <CardDescription>Gérez les informations principales de votre
-                                        boutique.</CardDescription>
+                                        catalogue .</CardDescription>
                                 </div>
                                 <div
                                     className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
@@ -554,20 +552,21 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                                 <AlertTriangle className="h-5 w-5"/> Zone de danger
                             </CardTitle>
                             <CardDescription className="text-red-700">
-                                La suppression de la boutique est définitive et irréversible.
+                                La suppression du catalogue est définitive et irréversible.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <p className="text-sm text-red-700">
-                                    Une fois que vous aurez supprimé votre boutique, toutes les données associées seront
+                                    Une fois que vous aurez supprimé votre catalogue, toutes les données associées
+                                    seront
                                     perdues et ne pourront pas être récupérées.
                                 </p>
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                         <Button variant="destructive" className="w-full sm:w-auto rounded-xl">
                                             <Trash2 className="mr-2 h-4 w-4"/>
-                                            Supprimer la boutique
+                                            Supprimer le catalogue
                                         </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
@@ -575,7 +574,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                                             <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
                                             <AlertDialogDescription>
                                                 Cette action est irréversible. Elle supprimera définitivement votre
-                                                boutique <strong>{store.name}</strong> et toutes les données associées.
+                                                catalogue <strong>{store.name}</strong> et toutes les données associées.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>

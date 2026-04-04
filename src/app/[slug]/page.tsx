@@ -13,7 +13,7 @@ export async function generateMetadata({params}: PageProps): Promise<Metadata> {
     const {slug} = await params;
     const storesQuery = adminDb.collection("stores").where("slug", "==", slug);
     const storeSnap = await storesQuery.get();
-    if (storeSnap.empty) return {title: "Boutique introuvable - Qreta"};
+    if (storeSnap.empty) return {title: "Catalogue introuvable - Qreta"};
     const store = storeSnap.docs[0].data() as Store;
     return {
         title: `${store.name} | Catalogue`,
@@ -45,7 +45,7 @@ export default async function PublicStorePage({params}: PageProps) {
                 <div className="h-16 w-16 bg-slate-200 rounded-full flex items-center justify-center mb-4">
                     <span className="text-2xl">🔒</span>
                 </div>
-                <h1 className="text-xl font-bold text-slate-900 mb-2">Boutique indisponible</h1>
+                <h1 className="text-xl font-bold text-slate-900 mb-2">Catalogue indisponible</h1>
                 <p className="text-slate-500 max-w-md">
                     Ce catalogue est actuellement privé ou en maintenance.
                     Revenez plus tard !

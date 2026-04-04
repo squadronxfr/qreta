@@ -19,7 +19,7 @@ export default function StoresPage() {
         <div className="container mx-auto py-10 px-4 max-w-6xl">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
                 <div>
-                    <h1 className="text-3xl font-bold font-heading tracking-tight text-slate-900">Mes Boutiques</h1>
+                    <h1 className="text-3xl font-bold font-heading tracking-tight text-slate-900">Mes Catalogues</h1>
                     <p className="text-slate-500 mt-1">Gérez vos catalogues et vos paramètres.</p>
                 </div>
                 <CreateStoreDialog storeCount={stores.length}/>
@@ -35,10 +35,10 @@ export default function StoresPage() {
                     <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
                         <StoreIcon className="h-8 w-8 text-indigo-600"/>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">Aucune boutique</h3>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Aucun Catalogue</h3>
                     <p className="text-slate-500 max-w-sm mb-6">
-                        Vous n&#39;avez pas encore créé de boutique. Lancez-vous pour commencer à vendre ou présenter
-                        vos services.
+                        Vous n&#39;avez pas encore créé de catalogue. Lancez-vous pour commencer à présenter
+                        vos services ou vos produits
                     </p>
                     <CreateStoreDialog storeCount={0}/>
                 </div>

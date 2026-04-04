@@ -48,7 +48,7 @@ export default function SuperAdminPage() {
                         <Shield className="h-8 w-8 text-purple-600"/>
                         <div>
                             <h1 className="text-3xl font-bold text-slate-900 font-heading">Administration</h1>
-                            <p className="text-slate-500 text-sm">Gestion des utilisateurs et boutiques</p>
+                            <p className="text-slate-500 text-sm">Gestion des utilisateurs et des catalogues</p>
                         </div>
                     </div>
                 </div>
@@ -98,7 +98,7 @@ export default function SuperAdminPage() {
                                                 <TableHead className="font-bold text-slate-700">Email</TableHead>
                                                 <TableHead className="font-bold text-slate-700">Nom</TableHead>
                                                 <TableHead className="font-bold text-slate-700">Plan</TableHead>
-                                                <TableHead className="font-bold text-slate-700">Boutiques</TableHead>
+                                                <TableHead className="font-bold text-slate-700">Catalogue(s)</TableHead>
                                                 <TableHead
                                                     className="text-right font-bold text-slate-700">Actions</TableHead>
                                             </TableRow>

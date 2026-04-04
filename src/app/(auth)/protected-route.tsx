@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useEffect, ReactNode, useState} from "react";
+import {useEffect, ReactNode, useState} from "react";
 import {useAuthStore} from "@/providers/auth-store-provider";
 import {useRouter} from "next/navigation";
 import {Progress} from "@/components/ui/progress";
@@ -24,12 +24,12 @@ export const ProtectedRoute = ({children, requiredRole}: ProtectedRouteProps) =>
         if (loading) {
             setTimeout(() => setProgress(0), 0);
             interval = setInterval(() => {
-                setProgress((oldProgress) => {
-                    if (oldProgress >= 90) {
+                setProgress((prev) => {
+                    if (prev >= 90) {
                         clearInterval(interval!);
-                        return oldProgress;
+                        return prev;
                     }
-                    return Math.min(oldProgress + 5, 90);
+                    return Math.min(prev + 5, 90);
                 });
             }, 200);
         } else {
@@ -37,9 +37,7 @@ export const ProtectedRoute = ({children, requiredRole}: ProtectedRouteProps) =>
         }
 
         return () => {
-            if (interval) {
-                clearInterval(interval);
-            }
+            if (interval) clearInterval(interval);
         };
     }, [loading]);
 
@@ -51,6 +49,11 @@ export const ProtectedRoute = ({children, requiredRole}: ProtectedRouteProps) =>
             return;
         }
 
+        if (!user.emailVerified) {
+            router.push("/verify-email");
+            return;
+        }
+
         if (requiredRole && userData?.role !== requiredRole) {
             router.push(requiredRole === "superadmin" ? "/stores" : "/login");
         }
@@ -59,13 +62,13 @@ export const ProtectedRoute = ({children, requiredRole}: ProtectedRouteProps) =>
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center h-screen gap-4">
-                <Progress value={progress} className="w-48" />
+                <Progress value={progress} className="w-48"/>
                 <p className="text-slate-500">Chargement de Qreta...</p>
             </div>
         );
     }
 
-    if (!user || (requiredRole && userData?.role !== requiredRole)) {
+    if (!user || !user.emailVerified || (requiredRole && userData?.role !== requiredRole)) {
         return null;
     }
 

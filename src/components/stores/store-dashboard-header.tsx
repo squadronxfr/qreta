@@ -20,7 +20,7 @@ export function StoreDashboardHeader({store}: StoreDashboardHeaderProps) {
                     className="flex items-center gap-1 hover:text-indigo-600 transition-colors font-medium"
                 >
                     <ChevronLeft className="h-4 w-4"/>
-                    Mes Boutiques
+                    Mes Catalogues
                 </Link>
                 <span className="text-slate-300">/</span>
                 <span className="font-semibold text-slate-900">{store.name}</span>
