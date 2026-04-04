@@ -68,9 +68,9 @@ export default function LoginPage() {
 
                 <div className="text-center mb-10">
                     <Link href="/">
-            <span className="font-heading text-3xl font-bold tracking-tight text-slate-900">
-              Qreta<span className="text-indigo-600">.</span>
-            </span>
+                        <span className="font-heading text-3xl font-bold tracking-tight text-slate-900">
+                            Qreta<span className="text-indigo-600">.</span>
+                        </span>
                     </Link>
                     <h1 className="text-2xl font-bold text-slate-900 mt-6 mb-2">Bon retour parmi nous</h1>
                     <p className="text-slate-500 text-sm">Accédez à votre espace commerçant</p>
@@ -95,8 +95,11 @@ export default function LoginPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password" className="text-sm font-medium text-slate-700">Mot de
-                                passe</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password" className="text-sm font-medium text-slate-700">
+                                    Mot de passe
+                                </Label>
+                            </div>
                             <Input
                                 id="password"
                                 type="password"
@@ -108,6 +111,12 @@ export default function LoginPage() {
                                 required
                                 className="h-11 rounded-xl border-slate-200 bg-slate-50/50 focus:border-indigo-300 focus:ring-indigo-200"
                             />
+                            <Link
+                                href="/forgot-password"
+                                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                            >
+                                Mot de passe oublié ?
+                            </Link>
                         </div>
 
                         {error && (
