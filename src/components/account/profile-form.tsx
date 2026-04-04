@@ -1,19 +1,10 @@
 "use client";
 
-import {useState, SyntheticEvent, useRef, ChangeEvent, useEffect} from "react";
-import {useAuthStore} from "@/providers/auth-store-provider";
+import {SyntheticEvent} from "react";
+import {useProfileForm} from "@/hooks/use-profile-form";
+import {useDeleteAccount} from "@/hooks/use-delete-account";
 import {useBilling} from "@/hooks/use-billing";
 import {useRouter} from "next/navigation";
-import {
-    updateProfile,
-    updatePassword,
-    EmailAuthProvider,
-    reauthenticateWithCredential
-} from "firebase/auth";
-import {doc, setDoc, updateDoc} from "firebase/firestore";
-import {ref, uploadBytes, getDownloadURL} from "firebase/storage";
-import {db, storage} from "@/lib/firebase/config";
-import {deleteAccount} from "@/lib/firebase/users";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
@@ -36,188 +27,41 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {toast} from "sonner";
 
 export function ProfileForm() {
-    const user = useAuthStore((s) => s.user);
-    const userData = useAuthStore((s) => s.userData);
-    const logout = useAuthStore((s) => s.logout);
-    const {handlePortal, isProcessing} = useBilling();
     const router = useRouter();
+    const {handlePortal, isProcessing} = useBilling();
 
-    const [loading, setLoading] = useState(false);
-    const [firstname, setFirstname] = useState("");
-    const [lastname, setLastname] = useState("");
+    const {
+        user,
+        userData,
+        isLoading,
+        firstname,
+        setFirstname,
+        lastname,
+        setLastname,
+        currentPassword,
+        setCurrentPassword,
+        newPassword,
+        setNewPassword,
+        confirmPassword,
+        setConfirmPassword,
+        avatarPreview,
+        fileInputRef,
+        getInitials,
+        handleFileChange,
+        handleRemoveAvatar,
+        handleSubmit,
+    } = useProfileForm();
 
-    const [currentPassword, setCurrentPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-
-    const [avatarFile, setAvatarFile] = useState<File | null>(null);
-    const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.photoURL || null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [deletePassword, setDeletePassword] = useState("");
-    const [isDeleting, setIsDeleting] = useState(false);
-
-    useEffect(() => {
-        if (userData) {
-            setFirstname(userData.firstname || "");
-            setLastname(userData.lastname || "");
-        } else if (user?.displayName) {
-            const parts = user.displayName.split(" ");
-            setFirstname(parts[0] || "");
-            setLastname(parts.slice(1).join(" ") || "");
-        }
-    }, [userData, user]);
-
-
-    const getInitials = () => {
-        const f = firstname ? firstname[0].toUpperCase() : "";
-        const l = lastname ? lastname[0].toUpperCase() : "";
-        return (f + l) || "U";
-    };
-
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setAvatarFile(file);
-            setAvatarPreview(URL.createObjectURL(file));
-        }
-    };
-
-    const handleDeleteAccount = async () => {
-        if (!user || !user.email) return;
-
-        if (!deletePassword) {
-            toast.error("Veuillez entrer votre mot de passe pour confirmer.");
-            return;
-        }
-
-        setIsDeleting(true);
-
-        try {
-            const credential = EmailAuthProvider.credential(user.email, deletePassword);
-            await reauthenticateWithCredential(user, credential);
-
-            await deleteAccount(user);
-            await logout();
-            toast.success("Votre compte a été supprimé.");
-            router.push("/");
-        } catch (err: unknown) {
-            console.error("Erreur suppression:", err);
-            if (err && typeof err === "object" && "code" in err) {
-                const code = (err as { code: string }).code;
-                if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
-                    toast.error("Mot de passe incorrect.");
-                } else {
-                    toast.error("Erreur lors de la suppression du compte.");
-                }
-            } else {
-                toast.error("Erreur critique lors de la suppression.");
-            }
-        } finally {
-            setIsDeleting(false);
-            setDeletePassword("");
-            setShowDeleteDialog(false);
-        }
-    };
-
-    const handleUpdateProfile = async (e: SyntheticEvent) => {
-        e.preventDefault();
-        if (!user) return;
-
-        setLoading(true);
-
-        try {
-            if (newPassword || currentPassword || confirmPassword) {
-                if (!currentPassword) {
-                    toast.error("Veuillez entrer votre mot de passe actuel.");
-                    setLoading(false);
-                    return;
-                }
-                if (newPassword.length < 6) {
-                    toast.error("Le nouveau mot de passe doit contenir au moins 6 caractères.");
-                    setLoading(false);
-                    return;
-                }
-                if (newPassword !== confirmPassword) {
-                    toast.error("Les mots de passe ne correspondent pas.");
-                    setLoading(false);
-                    return;
-                }
-
-                if (user.email) {
-                    const credential = EmailAuthProvider.credential(user.email, currentPassword);
-                    await reauthenticateWithCredential(user, credential);
-                    await updatePassword(user, newPassword);
-
-                    setCurrentPassword("");
-                    setNewPassword("");
-                    setConfirmPassword("");
-                }
-            }
-
-            let newPhotoURL = user.photoURL;
-            if (avatarFile) {
-                const storageRef = ref(storage, `users/${user.uid}/avatar_${Date.now()}`);
-                const snap = await uploadBytes(storageRef, avatarFile);
-                newPhotoURL = await getDownloadURL(snap.ref);
-            } else if (avatarPreview === null && user.photoURL) {
-                newPhotoURL = "";
-            }
-
-            const newDisplayName = `${firstname} ${lastname}`.trim();
-
-            if (newDisplayName !== user.displayName || newPhotoURL !== user.photoURL) {
-                await updateProfile(user, {
-                    displayName: newDisplayName,
-                    photoURL: newPhotoURL || ""
-                });
-
-                const userRef = doc(db, "users", user.uid);
-
-                const updatePayload = {
-                    firstname,
-                    lastname,
-                    photoUrl: newPhotoURL || undefined,
-                    email: user.email || "",
-                    updatedAt: new Date() as unknown as import("firebase/firestore").Timestamp
-                };
-
-                if (!userData) {
-                    await setDoc(userRef, {
-                        uid: user.uid,
-                        role: "store_owner",
-                        subscription: {plan: "free", status: "active", currentPeriodEnd: new Date()},
-                        createdAt: new Date(),
-                        ...updatePayload
-                    });
-                } else {
-                    await updateDoc(userRef, updatePayload);
-                }
-            }
-            
-            toast.success("Profil mis à jour avec succès.");
-
-        } catch (err: unknown) {
-            let message = "Une erreur est survenue.";
-            if (err && typeof err === "object" && "code" in err) {
-                const code = (err as { code: string }).code;
-                if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
-                    message = "Le mot de passe actuel est incorrect.";
-                } else if (code === "auth/requires-recent-login") {
-                    message = "Par sécurité, veuillez vous reconnecter avant de modifier ces informations.";
-                }
-            } else if (err instanceof Error) {
-                message = err.message;
-            }
-            toast.error(message)
-        } finally {
-            setLoading(false);
-        }
-    };
+    const {
+        showDialog,
+        setShowDialog,
+        deletePassword,
+        setDeletePassword,
+        isDeleting,
+        handleDelete,
+    } = useDeleteAccount();
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -244,8 +88,7 @@ export function ProfileForm() {
                                     className="absolute bottom-0 right-0 rounded-full h-8 w-8 shadow-sm border-2 border-white"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        setAvatarFile(null);
-                                        setAvatarPreview(null);
+                                        handleRemoveAvatar();
                                     }}
                                 >
                                     <Trash2 className="h-4 w-4"/>
@@ -265,6 +108,7 @@ export function ProfileForm() {
                         </Badge>
                     </CardContent>
                 </Card>
+
                 <Card className="border-indigo-100 bg-indigo-50/30 shadow-sm rounded-2xl overflow-hidden">
                     <CardHeader className="pb-3 border-b border-indigo-100/50">
                         <CardTitle className="text-base flex items-center gap-2 text-indigo-950">
@@ -279,8 +123,9 @@ export function ProfileForm() {
                             </Badge>
                         </div>
                         <div className="text-xs text-slate-400">
-                            Statut : <span
-                            className={`font-medium ${userData?.subscription?.status === "active" ? "text-green-600" : "text-orange-600"} capitalize`}>
+                            Statut :{" "}
+                            <span
+                                className={`font-medium capitalize ${userData?.subscription?.status === "active" ? "text-green-600" : "text-orange-600"}`}>
                                 {userData?.subscription?.status === "active" ? "Actif" :
                                     userData?.subscription?.status === "trialing" ? "Essai" :
                                         userData?.subscription?.status === "canceled" ? "Annulé" :
@@ -322,8 +167,9 @@ export function ProfileForm() {
                     </CardContent>
                 </Card>
             </div>
+
             <div className="lg:col-span-8 space-y-6">
-                <form onSubmit={handleUpdateProfile} className="space-y-6">
+                <form onSubmit={(e: SyntheticEvent) => handleSubmit(e)} className="space-y-6">
                     <Card className="border-slate-200 shadow-sm rounded-2xl">
                         <CardHeader className="pb-4 border-b border-slate-100">
                             <CardTitle className="flex items-center gap-2 text-lg">
@@ -369,6 +215,7 @@ export function ProfileForm() {
                             </div>
                         </CardContent>
                     </Card>
+
                     {user?.providerData?.[0]?.providerId === "password" && (
                         <Card className="border-slate-200 shadow-sm rounded-2xl">
                             <CardHeader className="pb-4 border-b border-slate-100">
@@ -379,8 +226,9 @@ export function ProfileForm() {
                             </CardHeader>
                             <CardContent className="space-y-4 pt-6">
                                 <div className="space-y-2">
-                                    <Label htmlFor="current-password">Mot de passe actuel <span
-                                        className="text-red-500">*</span></Label>
+                                    <Label htmlFor="current-password">
+                                        Mot de passe actuel <span className="text-red-500">*</span>
+                                    </Label>
                                     <Input
                                         id="current-password"
                                         type="password"
@@ -417,21 +265,23 @@ export function ProfileForm() {
                             </CardContent>
                         </Card>
                     )}
+
                     <div className="flex justify-end">
                         <Button
                             type="submit"
                             className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200 shadow-md px-6"
-                            disabled={loading}
+                            disabled={isLoading}
                         >
-                            {loading ? (
+                            {isLoading ? (
                                 <Spinner className="h-4 w-4 animate-spin"/>
                             ) : (
                                 <Save className="h-4 w-4"/>
                             )}
-                            {loading ? "Enregistrement..." : "Enregistrer les modifications"}
+                            {isLoading ? "Enregistrement..." : "Enregistrer les modifications"}
                         </Button>
                     </div>
                 </form>
+
                 <Card className="border-red-100 bg-red-50/30 shadow-none rounded-2xl mt-8">
                     <CardHeader>
                         <CardTitle className="text-red-600 flex items-center gap-2 text-base">
@@ -445,10 +295,11 @@ export function ProfileForm() {
                             La suppression de votre compte est définitive. Toutes vos boutiques et données seront
                             effacées.
                         </p>
-                        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                        <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
                             <AlertDialogTrigger asChild>
-                                <Button variant="destructive" className="rounded-xl whitespace-nowrap">Supprimer mon
-                                    compte</Button>
+                                <Button variant="destructive" className="rounded-xl whitespace-nowrap">
+                                    Supprimer mon compte
+                                </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent className="rounded-2xl">
                                 <AlertDialogHeader>
@@ -473,7 +324,7 @@ export function ProfileForm() {
                                 <AlertDialogFooter>
                                     <AlertDialogCancel className="rounded-xl cursor-pointer">Annuler</AlertDialogCancel>
                                     <Button
-                                        onClick={handleDeleteAccount}
+                                        onClick={handleDelete}
                                         disabled={isDeleting}
                                         className="bg-red-600 hover:bg-red-700 rounded-xl cursor-pointer"
                                     >
