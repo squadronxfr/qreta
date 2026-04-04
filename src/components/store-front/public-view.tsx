@@ -14,6 +14,7 @@ import {Dialog, DialogContent, DialogTitle} from "@/components/ui/dialog";
 import {ScrollArea, ScrollBar} from "@/components/ui/scroll-area";
 import {cn} from "@/lib/utils";
 import Link from "next/link";
+import Image from "next/image";
 
 interface PublicViewProps {
     store: Store;
@@ -92,7 +93,7 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                         <div
                             className="h-16 w-16 md:h-24 md:w-24 rounded-2xl md:rounded-3xl border-4 border-white/10 bg-white shadow-2xl overflow-hidden flex-shrink-0 backdrop-blur-sm">
                             {store.logoUrl ? (
-                                <img src={store.logoUrl} className="w-full h-full object-cover" alt="Logo"/>
+                                <Image src={store.logoUrl} fill sizes="96px" className="object-cover" alt="Logo"/>
                             ) : (
                                 <div
                                     className="w-full h-full flex items-center justify-center text-2xl md:text-4xl font-bold text-slate-300 bg-slate-100">
@@ -202,8 +203,8 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                                         <div
                                             className="h-20 w-20 md:h-24 md:w-24 shrink-0 rounded-xl overflow-hidden bg-slate-50 relative border border-slate-100">
                                             {item.imageUrl ? (
-                                                <img src={item.imageUrl} alt={item.name}
-                                                     className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"/>
+                                                <Image src={item.imageUrl} alt={item.name} fill sizes="96px"
+                                                       className="object-cover group-hover:scale-110 transition-transform duration-500"/>
                                             ) : (
                                                 <div
                                                     className="h-full w-full flex items-center justify-center bg-slate-50">
@@ -278,8 +279,8 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
 
                             <div className="relative h-64 w-full bg-slate-50">
                                 {selectedItem.imageUrl ? (
-                                    <img src={selectedItem.imageUrl} alt={selectedItem.name}
-                                         className="h-full w-full object-cover"/>
+                                    <Image src={selectedItem.imageUrl} alt={selectedItem.name} fill sizes="448px"
+                                           className="object-cover"/>
                                 ) : (
                                     <div className="h-full w-full flex items-center justify-center">
                                         <ImageIcon className="h-16 w-16 text-slate-200"/>

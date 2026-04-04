@@ -8,6 +8,7 @@ import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
 import {Store as StoreIcon, ExternalLink, Briefcase, Box, Layers, CalendarDays} from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function StoresPage() {
     const stores = useStoreStore((s) => s.stores);
@@ -62,13 +63,10 @@ export default function StoresPage() {
                                     <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4">
                                         <div className="flex justify-between items-start">
                                             <div
-                                                className="h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0 overflow-hidden relative border-4 border-white">
+                                                className="h-20 w-20 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0 overflow-hidden relative border-4 border-white">
                                                 {store.logoUrl ? (
-                                                    <img
-                                                        src={store.logoUrl}
-                                                        alt={store.name}
-                                                        className="h-full w-full object-cover rounded-xl"
-                                                    />
+                                                    <Image src={store.logoUrl} alt={store.name} fill sizes="80px"
+                                                           className="object-cover rounded-xl"/>
                                                 ) : (
                                                     <StoreIcon className="h-9 w-9"/>
                                                 )}

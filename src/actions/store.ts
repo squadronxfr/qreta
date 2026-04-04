@@ -1,6 +1,7 @@
 "use server";
 
 import {adminDb} from "@/lib/firebase/admin";
+import {getAuth} from "firebase-admin/auth";
 import {SUBSCRIPTION_PLANS, PlanKey} from "@/config/subscription";
 import {generateSlug} from "@/lib/utils/slug";
 import {Timestamp} from "firebase-admin/firestore";
@@ -12,9 +13,17 @@ export type ActionResponse = {
     error?: string;
 };
 
-export async function createStoreAction(userId: string, name: string, description: string): Promise<ActionResponse> {
+export async function createStoreAction(idToken: string, name: string, description: string): Promise<ActionResponse> {
     try {
-        if (!userId || !name) return {success: false, error: "Données incomplètes"};
+        if (!idToken || !name) return {success: false, error: "Données incomplètes"};
+
+        let userId: string;
+        try {
+            const decoded = await getAuth().verifyIdToken(idToken);
+            userId = decoded.uid;
+        } catch {
+            return {success: false, error: "Non autorisé"};
+        }
 
         const userDoc = await adminDb.collection("users").doc(userId).get();
         if (!userDoc.exists) return {success: false, error: "Utilisateur introuvable"};

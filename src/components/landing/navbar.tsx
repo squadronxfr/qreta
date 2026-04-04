@@ -1,10 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import {useState, useEffect} from "react";
 import Link from "next/link";
 import {Button} from "@/components/ui/button";
-import {motion, AnimatePresence} from "framer-motion";
 import {Menu, X, ArrowRight} from "lucide-react";
+
+const MotionDiv = dynamic(() =>
+        import("framer-motion").then(m => m.motion.div),
+    {ssr: false}
+);
+
+const AnimatePresence = dynamic(() =>
+        import("framer-motion").then(m => m.AnimatePresence),
+    {ssr: false}
+);
 
 const navLinks = [
     {name: "Fonctionnalités", href: "/#features"},
@@ -39,9 +49,9 @@ export const Navbar = () => {
         >
             <div className="container mx-auto px-6 flex justify-between items-center">
                 <Link href="/" className="z-50">
-          <span className="font-heading text-2xl font-bold tracking-tight text-slate-900">
-            Qreta<span className="text-indigo-600">.</span>
-          </span>
+                    <span className="font-heading text-2xl font-bold tracking-tight text-slate-900">
+                        Qreta<span className="text-indigo-600">.</span>
+                    </span>
                 </Link>
 
                 <div className="hidden md:flex items-center gap-8">
@@ -82,7 +92,7 @@ export const Navbar = () => {
 
             <AnimatePresence>
                 {mobileMenuOpen && (
-                    <motion.div
+                    <MotionDiv
                         initial={{opacity: 0, y: -20}}
                         animate={{opacity: 1, y: 0}}
                         exit={{opacity: 0, y: -20}}
@@ -114,7 +124,7 @@ export const Navbar = () => {
                                 </Link>
                             </Button>
                         </div>
-                    </motion.div>
+                    </MotionDiv>
                 )}
             </AnimatePresence>
         </nav>

@@ -21,7 +21,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
 import {
-    Save, User, Lock, Check,
+    Save, User, Lock,
     Camera, Trash2, Sparkles, AlertTriangle, ArrowUpCircle, ExternalLink,
     Mail
 } from "lucide-react";
@@ -46,9 +46,6 @@ export function ProfileForm() {
     const router = useRouter();
 
     const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
     const [firstname, setFirstname] = useState("");
     const [lastname, setLastname] = useState("");
 
@@ -75,17 +72,6 @@ export function ProfileForm() {
         }
     }, [userData, user]);
 
-    useEffect(() => {
-        if (success) {
-            toast.success("Profil mis à jour avec succès.");
-        }
-    }, [success]);
-
-    useEffect(() => {
-        if (error) {
-            toast.error(error);
-        }
-    }, [error]);
 
     const getInitials = () => {
         const f = firstname ? firstname[0].toUpperCase() : "";
@@ -124,12 +110,12 @@ export function ProfileForm() {
             if (err && typeof err === "object" && "code" in err) {
                 const code = (err as { code: string }).code;
                 if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
-                    setError("Mot de passe incorrect.");
+                    toast.error("Mot de passe incorrect.");
                 } else {
-                    setError("Erreur lors de la suppression du compte.");
+                    toast.error("Erreur lors de la suppression du compte.");
                 }
             } else {
-                setError("Erreur critique lors de la suppression.");
+                toast.error("Erreur critique lors de la suppression.");
             }
         } finally {
             setIsDeleting(false);
@@ -143,23 +129,21 @@ export function ProfileForm() {
         if (!user) return;
 
         setLoading(true);
-        setError(null);
-        setSuccess(false);
 
         try {
             if (newPassword || currentPassword || confirmPassword) {
                 if (!currentPassword) {
-                    setError("Veuillez entrer votre mot de passe actuel.");
+                    toast.error("Veuillez entrer votre mot de passe actuel.");
                     setLoading(false);
                     return;
                 }
                 if (newPassword.length < 6) {
-                    setError("Le nouveau mot de passe doit faire 6 caractères minimum.");
+                    toast.error("Le nouveau mot de passe doit contenir au moins 6 caractères.");
                     setLoading(false);
                     return;
                 }
                 if (newPassword !== confirmPassword) {
-                    setError("Les nouveaux mots de passe ne correspondent pas.");
+                    toast.error("Les mots de passe ne correspondent pas.");
                     setLoading(false);
                     return;
                 }
@@ -214,9 +198,8 @@ export function ProfileForm() {
                     await updateDoc(userRef, updatePayload);
                 }
             }
-
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 3000);
+            
+            toast.success("Profil mis à jour avec succès.");
 
         } catch (err: unknown) {
             let message = "Une erreur est survenue.";
@@ -230,7 +213,7 @@ export function ProfileForm() {
             } else if (err instanceof Error) {
                 message = err.message;
             }
-            setError(message);
+            toast.error(message)
         } finally {
             setLoading(false);
         }
@@ -437,21 +420,15 @@ export function ProfileForm() {
                     <div className="flex justify-end">
                         <Button
                             type="submit"
-                            className={`rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100 shadow-md px-6 ${
-                                success
-                                    ? "bg-green-600 hover:bg-green-700 shadow-green-200 text-white"
-                                    : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 text-white"
-                            }`}
+                            className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200 shadow-md px-6"
                             disabled={loading}
                         >
                             {loading ? (
                                 <Spinner className="h-4 w-4 animate-spin"/>
-                            ) : success ? (
-                                <Check className="h-4 w-4"/>
                             ) : (
                                 <Save className="h-4 w-4"/>
                             )}
-                            {loading ? "Enregistrement..." : success ? "Enregistré !" : "Enregistrer les modifications"}
+                            {loading ? "Enregistrement..." : "Enregistrer les modifications"}
                         </Button>
                     </div>
                 </form>

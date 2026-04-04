@@ -1,6 +1,6 @@
 "use client";
 
-import {useState, SyntheticEvent} from "react";
+import {useState} from "react";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
@@ -17,9 +17,6 @@ import {
     Clock,
     HelpCircle,
     ShieldCheck,
-    AlertTriangle,
-    Zap,
-    Minus,
 } from "lucide-react";
 import {Spinner} from "@/components/ui/spinner";
 import Link from "next/link";
@@ -43,7 +40,6 @@ export default function ContactPage() {
     const [phone, setPhone] = useState("");
     const [company, setCompany] = useState("");
     const [subject, setSubject] = useState("");
-    const [priority, setPriority] = useState("normal");
     const [message, setMessage] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +48,8 @@ export default function ContactPage() {
     const messageLength = message.length;
     const messageProgress = Math.min((messageLength / MIN_MESSAGE) * 100, 100);
 
-    const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
+    // MODIFIÉ : redirige vers mailto au lieu de simuler un envoi
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
 
@@ -71,14 +68,15 @@ export default function ContactPage() {
 
         setIsLoading(true);
 
-        try {
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-            setIsSuccess(true);
-        } catch {
-            setError("Une erreur est survenue. Veuillez réessayer.");
-        } finally {
-            setIsLoading(false);
-        }
+        const mailtoBody = encodeURIComponent(
+            `Nom : ${name}\nEmail : ${email}${phone ? `\nTéléphone : ${phone}` : ""}${company ? `\nEntreprise : ${company}` : ""}\n\n${message}`
+        );
+        const mailtoSubject = encodeURIComponent(`[Qreta] ${subject}`);
+
+        window.location.href = `mailto:support@qreta.fr?subject=${mailtoSubject}&body=${mailtoBody}`;
+
+        setIsLoading(false);
+        setIsSuccess(true);
     };
 
     return (
@@ -100,7 +98,6 @@ export default function ContactPage() {
                 </Link>
 
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 items-start">
-                    {/* Left panel */}
                     <div className="lg:col-span-2 space-y-8">
                         <div>
                             <Link href="/">
@@ -176,7 +173,6 @@ export default function ContactPage() {
                         </p>
                     </div>
 
-                    {/* Right panel */}
                     <div className="lg:col-span-3">
                         {isSuccess ? (
                             <div className="bg-white border border-slate-200 rounded-3xl p-10 shadow-sm text-center">
@@ -186,15 +182,15 @@ export default function ContactPage() {
                                         <CheckCircle className="h-10 w-10 text-indigo-600"/>
                                     </div>
                                 </div>
-                                <h2 className="text-2xl font-bold text-slate-900 mb-3">Message envoyé !</h2>
+                                <h2 className="text-2xl font-bold text-slate-900 mb-3">Client mail ouvert !</h2>
                                 <p className="text-slate-500 mb-2">
-                                    Merci pour votre message, <span
+                                    Votre message a été préparé, <span
                                     className="font-semibold text-slate-700">{name}</span>.
                                 </p>
                                 <p className="text-slate-500 text-sm mb-8">
-                                    Nous vous répondrons à{" "}
+                                    Envoyez-le depuis votre client mail. Nous vous répondrons à{" "}
                                     <span className="font-medium text-indigo-600">{email}</span>{" "}
-                                    dans les plus brefs délais. Un email de confirmation vous a été envoyé.
+                                    dans les plus brefs délais.
                                 </p>
                                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                                     <Button
@@ -206,7 +202,6 @@ export default function ContactPage() {
                                             setPhone("");
                                             setCompany("");
                                             setSubject("");
-                                            setPriority("normal");
                                             setMessage("");
                                             setIsSuccess(false);
                                         }}
@@ -225,12 +220,13 @@ export default function ContactPage() {
                             <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
                                 <div className="mb-7">
                                     <h2 className="text-xl font-bold text-slate-900">Envoyer un message</h2>
-                                    <p className="text-sm text-slate-500 mt-1">Tous les champs marqués <span
-                                        className="text-red-500">*</span> sont obligatoires</p>
+                                    <p className="text-sm text-slate-500 mt-1">
+                                        Tous les champs marqués <span className="text-red-500">*</span> sont
+                                        obligatoires
+                                    </p>
                                 </div>
 
                                 <form onSubmit={handleSubmit} className="space-y-6">
-                                    {/* Identité */}
                                     <div>
                                         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Vos
                                             coordonnées</p>
@@ -312,7 +308,6 @@ export default function ContactPage() {
                                         </div>
                                     </div>
 
-                                    {/* Sujet */}
                                     <div>
                                         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Votre
                                             demande</p>
@@ -349,7 +344,7 @@ export default function ContactPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    {/* Message */}
+
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
                                             <Label htmlFor="message" className="text-sm font-medium text-slate-700">
@@ -372,7 +367,6 @@ export default function ContactPage() {
                                             rows={6}
                                             className="rounded-xl border-slate-200 bg-slate-50/50 focus:border-indigo-300 focus:ring-indigo-200 resize-none"
                                         />
-                                        {/* Progress bar */}
                                         <div className="flex items-center gap-2">
                                             <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
                                                 <div

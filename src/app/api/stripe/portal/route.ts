@@ -13,6 +13,12 @@ type PortalBody = {
     action?: "cancel";
 };
 
+type UserData = {
+    subscription?: {
+        stripeSubscriptionId?: string;
+    };
+};
+
 function getAppOrigin(req: Request): string {
     const env = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL;
     if (env) return new URL(env).origin;
@@ -35,14 +41,13 @@ async function resolveSubscriptionId(customerId: string, userData: unknown): Pro
         typeof userData === "object" &&
         userData !== null &&
         "subscription" in userData &&
-        typeof (userData as any).subscription?.stripeSubscriptionId === "string"
-            ? ((userData as any).subscription.stripeSubscriptionId as string)
+        typeof (userData as UserData).subscription?.stripeSubscriptionId === "string"
+            ? (userData as UserData).subscription!.stripeSubscriptionId!
             : null;
 
     if (subId) return subId;
 
     const subs = await stripe.subscriptions.list({customer: customerId, status: "all", limit: 10});
-
     const preferred = subs.data.find((s) => ["active", "trialing", "past_due"].includes(s.status));
     return (preferred ?? subs.data[0])?.id ?? null;
 }
@@ -80,11 +85,9 @@ export async function POST(req: Request) {
             return_url: safeReturn.toString(),
         };
 
-        // 1) Flow annulation (deep link)
         if (action === "cancel") {
             const subscriptionId = await resolveSubscriptionId(customerId, userData);
             if (!subscriptionId) {
-                // fallback : ouvre juste le portal
                 const session = await stripe.billingPortal.sessions.create(portalParams);
                 return NextResponse.json({url: session.url});
             }
@@ -105,18 +108,15 @@ export async function POST(req: Request) {
             return NextResponse.json({url: session.url});
         }
 
-        // 2) Flow changement de plan (confirm)
         if (priceId) {
             const subscriptionId = await resolveSubscriptionId(customerId, userData);
             if (subscriptionId) {
                 const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
-                // Guard : si l’abonnement n’a pas exactement 1 item, on ne force pas update_confirm
                 if (subscription.items.data.length === 1) {
                     const item = subscription.items.data[0];
                     const currentPriceId = item.price?.id;
 
-                    // Si même price => PAS de flow confirm (évite exactement ton erreur)
                     if (currentPriceId && currentPriceId === priceId) {
                         const session = await stripe.billingPortal.sessions.create(portalParams);
                         return NextResponse.json({url: session.url});
@@ -133,7 +133,6 @@ export async function POST(req: Request) {
             }
         }
 
-        // 3) Portal normal
         const session = await stripe.billingPortal.sessions.create(portalParams);
         return NextResponse.json({url: session.url});
     } catch (error: unknown) {

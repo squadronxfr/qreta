@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {toast} from "sonner";
 import {deleteStore} from "@/lib/firebase/store";
+import Image from "next/image";
 
 interface StoreSettingsFormProps {
     store: Store;
@@ -177,7 +178,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
         const svgData = new XMLSerializer().serializeToString(svg);
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-        const img = new Image();
+        const img = new window.Image();
         img.onload = () => {
             canvas.width = img.width;
             canvas.height = img.height;
@@ -369,8 +370,8 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                                         >
                                             {logoPreview ? (
                                                 <>
-                                                    <img src={logoPreview} alt="Logo"
-                                                         className="w-full h-full object-cover"/>
+                                                    <Image src={logoPreview} alt="Logo" fill sizes="160px"
+                                                           className="object-cover"/>
                                                     <div
                                                         className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                         <p className="text-white font-medium text-xs flex items-center gap-1">
@@ -399,8 +400,9 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                                     >
                                         {bannerPreview ? (
                                             <>
-                                                <img src={bannerPreview} alt="Banner"
-                                                     className="w-full h-full object-cover"/>
+                                                <Image src={bannerPreview} alt="Banner" fill
+                                                       sizes="(max-width: 768px) 100vw, 800px"
+                                                       className="object-cover"/>
                                                 <div
                                                     className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                     <p className="text-white font-medium text-xs flex items-center gap-1">

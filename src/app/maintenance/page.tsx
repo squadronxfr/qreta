@@ -22,7 +22,7 @@ export default function MaintenancePage() {
             });
             toast.success("Votre adresse a bien été enregistrée.");
             setEmail("");
-        } catch (error) {
+        } catch {
             toast.error("Impossible d'enregistrer votre e-mail pour le moment.");
         } finally {
             setIsLoading(false);
@@ -46,8 +46,8 @@ export default function MaintenancePage() {
                 </h1>
 
                 <p className="text-slate-400 text-lg mb-10 max-w-md">
-                    Nous travaillons actuellement sur la création de l'outil. Laissez-nous votre e-mail pour être
-                    informé dès l'ouverture.
+                    Nous travaillons actuellement sur la création de l&apos;outil. Laissez-nous votre e-mail pour être
+                    informé dès l&apos;ouverture.
                 </p>
 
                 <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 w-full max-w-md mb-12">

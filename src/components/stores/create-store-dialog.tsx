@@ -1,5 +1,5 @@
 "use client";
-import React, {useState} from "react";
+import {useState} from "react";
 import {useAuthStore} from "@/providers/auth-store-provider";
 import {createStoreAction} from "@/actions/store";
 import {Button} from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {useRouter} from "next/navigation";
 import {SUBSCRIPTION_PLANS, PlanKey} from "@/config/subscription";
 import Link from "next/link";
 import {toast} from "sonner";
+import type {FormEvent} from "react";
 
 interface CreateStoreDialogProps {
     storeCount: number;
@@ -41,7 +42,7 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
     const plan = SUBSCRIPTION_PLANS[planKey];
     const isQuotaReached = storeCount >= plan.quota;
 
-    const handleCreate = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    const handleCreate = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!user) return;
 
@@ -53,20 +54,17 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
         setLoading(true);
 
         try {
-            const result = await createStoreAction(user.uid, name, description);
+            const idToken = await user.getIdToken();
+            const result = await createStoreAction(idToken, name, description);
 
             if (result.success && result.storeId) {
-                toast.success("Catalogue créé !", {
-                    description: "Votre espace est prêt."
-                });
+                toast.success("Catalogue créé !", {description: "Votre espace est prêt."});
                 setOpen(false);
                 setName("");
                 setDescription("");
                 router.push(`/stores/${result.storeId}`);
             } else {
-                toast.error("Erreur", {
-                    description: result.error || "Une erreur est survenue."
-                });
+                toast.error("Erreur", {description: result.error || "Une erreur est survenue."});
             }
         } catch (err) {
             console.error(err);
@@ -96,18 +94,14 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
                             Votre plan <strong>{plan.name}</strong> ne permet de gérer que {plan.quota} boutique(s).
                         </DialogDescription>
                     </DialogHeader>
-
                     <div className="py-4 text-center space-y-4">
                         <p className="text-sm text-slate-500">
                             Passez au plan supérieur pour débloquer plus de boutiques et de fonctionnalités.
                         </p>
                     </div>
-
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button variant="outline" className="rounded-xl">
-                                Annuler
-                            </Button>
+                            <Button variant="outline" className="rounded-xl">Annuler</Button>
                         </DialogClose>
                         <Button asChild className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white">
                             <Link href="/billing">Voir les offres</Link>
@@ -138,7 +132,6 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
                             Configurez les informations de base de votre nouvel établissement.
                         </DialogDescription>
                     </DialogHeader>
-
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                             <Label htmlFor="name">Nom de l&#39;établissement</Label>
@@ -162,7 +155,6 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
                             />
                         </div>
                     </div>
-
                     <DialogFooter>
                         <Button
                             type="submit"

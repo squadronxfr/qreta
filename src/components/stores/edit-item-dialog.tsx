@@ -34,6 +34,7 @@ import {
 import {ImageIcon, X, Lock} from "lucide-react";
 import {Spinner} from "@/components/ui/spinner";
 import {toast} from "sonner";
+import Image from "next/image"
 
 interface EditItemDialogProps {
     item: Item;
@@ -307,7 +308,8 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                         <Label>Image</Label>
                         {previewUrl ? (
                             <div className="relative w-full h-48 rounded-2xl overflow-hidden border bg-slate-50 group">
-                                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover"/>
+                                <Image src={previewUrl} alt="Preview" fill sizes="(max-width: 768px) 100vw, 448px"
+                                       className="object-cover"/>
                                 <Button
                                     type="button"
                                     variant="destructive"
