@@ -6,12 +6,6 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 
-/**
- * Autorise uniquement:
- * - URLs relatives (/billing)
- * - URLs absolues SAME-ORIGIN
- */
-
 export function sanitizeReturnUrl(input: unknown, appOrigin: string): URL {
     const fallback = new URL("/billing", appOrigin);
 

@@ -1,6 +1,7 @@
 import {createStore} from "zustand";
 import {User} from "firebase/auth";
 import {SUBSCRIPTION_PLANS, PlanKey} from "@/config/subscription";
+import {toast} from "sonner";
 
 export interface Invoice {
     id: string;
@@ -55,7 +56,7 @@ export const createBillingStore = () => {
                     set({invoices: data.invoices || []});
                 }
             } catch (error) {
-                console.error("Erreur récupération factures:", error);
+                toast.error("Impossible de charger les factures. Réessayez plus tard.");
             } finally {
                 set({isLoadingInvoices: false});
             }
@@ -82,7 +83,6 @@ export const createBillingStore = () => {
 
                 window.location.href = data.url;
             } catch (error) {
-                console.error("Checkout error:", error);
                 set({isProcessing: null});
                 throw error;
             }
@@ -124,7 +124,6 @@ export const createBillingStore = () => {
 
                 window.location.href = data.url;
             } catch (error) {
-                console.error("Portal error:", error);
                 set({isProcessing: null});
                 throw error;
             }

@@ -1,8 +1,6 @@
 "use client";
 
 import {useAuthStore} from "@/providers/auth-store-provider";
-import {auth} from "@/lib/firebase/config";
-import {signOut} from "firebase/auth";
 import {useRouter} from "next/navigation";
 import Link from "next/link";
 import {
@@ -21,9 +19,10 @@ export function DashboardHeader() {
     const user = useAuthStore((s) => s.user);
     const userData = useAuthStore((s) => s.userData);
     const router = useRouter();
+    const logout = useAuthStore((s) => s.logout);
 
     const handleLogout = async () => {
-        await signOut(auth);
+        await logout();
         router.push("/login");
     };
 

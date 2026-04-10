@@ -112,7 +112,7 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                                 {store.address && (
                                     <div
                                         className="flex items-center gap-1.5 text-[10px] md:text-xs font-medium text-slate-200 bg-white/10 px-2 py-1 md:px-3 md:py-1.5 rounded-full backdrop-blur-md border border-white/10 hover:bg-white/20 transition-colors cursor-pointer"
-                                        onClick={() => window.open(`http://googleusercontent.com/maps.google.com/search/${encodeURIComponent(store.address!)}`, '_blank')}>
+                                        onClick={() => window.open(`https://maps.google.com/search?q=${encodeURIComponent(store.address!)}`, '_blank')}>
                                         <MapPin className="h-3 w-3"/> <span
                                         className="truncate max-w-50">{store.address}</span>
                                     </div>

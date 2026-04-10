@@ -262,7 +262,7 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
             setBannerFile(null);
             setShouldRemoveLogo(false);
             setShouldRemoveBanner(false);
-            toast.success("Les paramètres de du ctalogue ont été mis à jour avec succès !");
+            toast.success("Les paramètres du catalogue ont été mis à jour avec succès !");
             setSuccess(true);
 
             setTimeout(() => setSuccess(false), 2000);
@@ -423,7 +423,6 @@ export function StoreSettingsForm({store}: StoreSettingsFormProps) {
                     </Card>
 
                     <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-                        {/* ... Contenu Coordonnées (inchangé) ... */}
                         <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
                             <CardTitle className="text-lg font-heading">Coordonnées</CardTitle>
                             <CardDescription>Aidez vos clients à vous contacter.</CardDescription>
