@@ -68,7 +68,6 @@ export function useBilling() {
         }
     };
 
-    // TODO : renouvellement ne se met pas a jour
     let renewalDate = null;
     if (subscription?.currentPeriodEnd) {
         const seconds = typeof subscription.currentPeriodEnd === "object" && "seconds" in subscription.currentPeriodEnd

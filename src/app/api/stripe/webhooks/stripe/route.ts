@@ -24,17 +24,16 @@ async function updateUserSubscription(
     const priceId = subscription.items.data[0]?.price.id;
     const planId = getPlanByPriceId(priceId);
 
-    const subscriptionAny = subscription as unknown as Record<string, unknown>;
 
-    const isCanceled = subscriptionAny.cancel_at_period_end || !!subscriptionAny.cancel_at;
-    const cancelDate = subscriptionAny.cancel_at ?
-        toFirestoreTimestamp(subscriptionAny.cancel_at as number) :
-        subscriptionAny.current_period_end ? toFirestoreTimestamp(subscriptionAny.current_period_end as number) : null;
+    const isCanceled = subscription.cancel_at_period_end || !!subscription.cancel_at;
+    const currentPeriodEnd = toFirestoreTimestamp(subscription.items.data[0]?.current_period_end);
+    const cancelAt = subscription.cancel_at ? toFirestoreTimestamp(subscription.cancel_at) : null;
 
     const updateData: Record<string, unknown> = {
         "subscription.status": subscription.status,
         "subscription.plan": planId,
-        "subscription.currentPeriodEnd": cancelDate || toFirestoreTimestamp(subscriptionAny.billing_cycle_anchor as number),
+        "subscription.currentPeriodEnd": currentPeriodEnd,
+        "subscription.cancelAt": cancelAt,
         "subscription.cancelAtPeriodEnd": isCanceled,
         "subscription.stripeSubscriptionId": subscription.id,
         "subscription.stripePriceId": priceId,
