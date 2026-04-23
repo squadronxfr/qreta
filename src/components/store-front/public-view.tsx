@@ -232,15 +232,31 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                                                     {item.duration && (
                                                         <span
                                                             className="text-[10px] text-slate-400 flex items-center gap-1 mb-0.5">
-                                                            <Clock className="h-3 w-3"/> {item.duration}
-                                                        </span>
+                <Clock className="h-3 w-3"/> {item.duration} min
+            </span>
                                                     )}
-                                                    <div className="flex items-baseline gap-1">
-                                                        {item.isStartingPrice && <span
-                                                            className="text-[10px] text-slate-400 font-medium uppercase">Dès</span>}
-                                                        <span
-                                                            className="text-base font-bold text-slate-900">{item.price}€</span>
-                                                    </div>
+                                                    {item.isOnPromotion && item.discountPercentage ? (
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span
+                                                                    className="text-xs text-slate-400 line-through">{item.price}€</span>
+                                                                <span
+                                                                    className="text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-full">
+                        -{item.discountPercentage}%
+                    </span>
+                                                            </div>
+                                                            <span className="text-base font-bold text-orange-600">
+                    {(item.price * (1 - item.discountPercentage / 100)).toFixed(2)}€
+                </span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-baseline gap-1">
+                                                            {item.isStartingPrice && <span
+                                                                className="text-[10px] text-slate-400 font-medium uppercase">Dès</span>}
+                                                            <span
+                                                                className="text-base font-bold text-slate-900">{item.price}€</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div
                                                     className="h-7 w-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[var(--primary)] group-hover:text-white transition-all">
@@ -303,17 +319,35 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                                         {selectedItem.duration && (
                                             <Badge variant="secondary"
                                                    className="font-normal text-xs bg-slate-100 text-slate-500 hover:bg-slate-100">
-                                                Durée : {selectedItem.duration}
+                                                Durée : {selectedItem.duration} min
                                             </Badge>
                                         )}
                                     </div>
                                     <div className="text-right">
-                                        {selectedItem.isStartingPrice &&
-                                            <div className="text-xs text-slate-400 uppercase font-bold">À partir
-                                                de</div>}
-                                        <div
-                                            className="text-2xl font-bold text-[var(--primary)]">{selectedItem.price}€
-                                        </div>
+                                        {selectedItem.isOnPromotion && selectedItem.discountPercentage ? (
+                                            <div className="flex flex-col items-end gap-0.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span
+                                                        className="text-sm text-slate-400 line-through">{selectedItem.price}€</span>
+                                                    <span
+                                                        className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">
+                    -{selectedItem.discountPercentage}%
+                </span>
+                                                </div>
+                                                <div className="text-2xl font-bold text-orange-600">
+                                                    {(selectedItem.price * (1 - selectedItem.discountPercentage / 100)).toFixed(2)}€
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {selectedItem.isStartingPrice &&
+                                                    <div className="text-xs text-slate-400 uppercase font-bold">à partir
+                                                        de</div>}
+                                                <div
+                                                    className="text-2xl font-bold text-[var(--primary)]">{selectedItem.price}€
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 

@@ -86,7 +86,7 @@ export function CategoryActions({category}: CategoryActionsProps) {
             <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 text-xs text-red-400 hover:text-red-600 cursor-pointer"
+                className="h-8 text-xs text-red-400 hover:text-white hover:bg-red-500 cursor-pointer"
                 onClick={() => setOpenDelete(true)}
             >
                 Supprimer

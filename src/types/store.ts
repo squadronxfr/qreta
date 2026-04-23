@@ -39,5 +39,7 @@ export interface Item {
     imageUrl?: string;
     order: number;
     isActive: boolean;
+    isOnPromotion?: boolean;
+    discountPercentage?: number;
     createdAt: Timestamp;
 }

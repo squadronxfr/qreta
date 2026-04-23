@@ -31,10 +31,11 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {ImageIcon, X, Lock} from "lucide-react";
+import {Badge} from "@/components/ui/badge";
+import {ImageIcon, X, Lock, Tag} from "lucide-react";
 import {Spinner} from "@/components/ui/spinner";
 import {toast} from "sonner";
-import Image from "next/image"
+import Image from "next/image";
 
 interface EditItemDialogProps {
     item: Item;
@@ -61,6 +62,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
 
     const userPlanKey = (userData?.subscription?.plan as PlanKey) || "free";
     const canManageAvailability = userPlanKey !== "free";
+    const canManagePromotion = userPlanKey !== "free";
 
     const initialDuration = parseDurationValue(item.duration);
 
@@ -73,7 +75,9 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
         isStartingPrice: item.isStartingPrice,
         hasDuration: item.type === "service" && initialDuration !== null,
         duration: initialDuration,
-        isActive: item.isActive ?? true
+        isActive: item.isActive ?? true,
+        isOnPromotion: item.isOnPromotion ?? false,
+        discountPercentage: item.discountPercentage ?? 10,
     });
 
     useEffect(() => {
@@ -88,7 +92,9 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                 isStartingPrice: item.isStartingPrice,
                 hasDuration: item.type === "service" && nextDuration !== null,
                 duration: nextDuration,
-                isActive: item.isActive ?? true
+                isActive: item.isActive ?? true,
+                isOnPromotion: item.isOnPromotion ?? false,
+                discountPercentage: item.discountPercentage ?? 10,
             });
             setPreviewUrl(item.imageUrl || null);
             setImageFile(null);
@@ -113,6 +119,11 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
+    const discountedPrice = (() => {
+        const base = parseFloat(formData.price);
+        if (!formData.isOnPromotion || !formData.discountPercentage || isNaN(base)) return null;
+        return (base * (1 - formData.discountPercentage / 100)).toFixed(2);
+    })();
 
     const handleSubmit = async (e: React.SyntheticEvent) => {
         e.preventDefault();
@@ -137,6 +148,8 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                     isStartingPrice: formData.isStartingPrice,
                     duration: formData.type === "service" && formData.hasDuration ? formData.duration : null,
                     isActive: formData.isActive,
+                    isOnPromotion: canManagePromotion ? formData.isOnPromotion : (item.isOnPromotion ?? false),
+                    discountPercentage: canManagePromotion ? formData.discountPercentage : (item.discountPercentage ?? 0),
                     imageUrl: item.imageUrl,
                 },
                 imageFile,
@@ -223,7 +236,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                                 })}
                             />
                             <label htmlFor="edit-starting" className="text-xs font-medium cursor-pointer">
-                                Prix &#34;À partir de&#34;
+                                Prix &#34;à partir de&#34;
                             </label>
                         </div>
                     </div>
@@ -248,7 +261,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
 
                             {formData.hasDuration && (
                                 <div className="space-y-2">
-                                    <Label htmlFor="edit-duration">Dur&eacute;e en minutes</Label>
+                                    <Label htmlFor="edit-duration">Durée en minutes</Label>
                                     <Input
                                         id="edit-duration"
                                         type="number"
@@ -268,6 +281,80 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                             )}
                         </div>
                     )}
+
+                    <div
+                        className={`p-4 rounded-xl border transition-colors ${formData.isOnPromotion && canManagePromotion ? "bg-orange-50 border-orange-200" : "bg-slate-50 border-slate-100"}`}>
+                        <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                                <Label className="text-base font-medium flex items-center gap-1.5">
+                                    <Tag className="h-4 w-4 text-orange-500"/> Promotion
+                                </Label>
+                                {!canManagePromotion && <Lock className="h-3 w-3 text-slate-400"/>}
+                            </div>
+
+                            {canManagePromotion ? (
+                                <Switch
+                                    checked={formData.isOnPromotion}
+                                    onCheckedChange={(checked) => setFormData({...formData, isOnPromotion: checked})}
+                                />
+                            ) : (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div onClick={(e) => e.preventDefault()}>
+                                                <Switch checked={false} disabled className="opacity-50"/>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Fonctionnalité réservée au plan Pro</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                        </div>
+
+                        <p className="text-xs text-slate-500 mb-3">
+                            {canManagePromotion
+                                ? "Affichez un prix barré et une remise sur la carte produit."
+                                : "Passez au plan Pro pour activer les promotions."}
+                        </p>
+
+                        {canManagePromotion && formData.isOnPromotion && (
+                            <div className="space-y-3 pt-1">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="edit-discount" className="text-sm">Remise (%)</Label>
+                                    <div className="flex items-center gap-3">
+                                        <Input
+                                            id="edit-discount"
+                                            type="number"
+                                            min={1}
+                                            max={99}
+                                            value={formData.discountPercentage}
+                                            onChange={(e) => {
+                                                const parsed = parseInt(e.target.value, 10);
+                                                setFormData({
+                                                    ...formData,
+                                                    discountPercentage: Number.isFinite(parsed) ? Math.min(99, Math.max(1, parsed)) : 10,
+                                                });
+                                            }}
+                                            className="rounded-xl w-24 bg-white"
+                                        />
+                                        <Badge className="bg-orange-100 text-orange-700 border-none text-sm px-3">
+                                            -{formData.discountPercentage}%
+                                        </Badge>
+                                    </div>
+                                </div>
+
+                                {discountedPrice && (
+                                    <div className="flex items-center gap-3 pt-1">
+                                        <span
+                                            className="text-sm text-slate-400 line-through">{parseFloat(formData.price).toFixed(2)} €</span>
+                                        <span className="text-base font-bold text-orange-600">{discountedPrice} €</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
 
                     <div
                         className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">

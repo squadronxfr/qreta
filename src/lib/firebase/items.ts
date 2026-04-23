@@ -24,6 +24,8 @@ interface CreateItemData {
     type: "product" | "service";
     isStartingPrice: boolean;
     duration?: number | null;
+    isOnPromotion?: boolean;
+    discountPercentage?: number;
 }
 
 export const createItem = async (

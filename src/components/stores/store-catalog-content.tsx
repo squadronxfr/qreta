@@ -120,31 +120,31 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                        <AddCategoryDialog storeId={storeId}/>
-                        <div className="w-full sm:w-auto [&_button]:w-full">
-                            {hasCategories ? (
-                                <AddItemDialog storeId={storeId} categories={categories}/>
-                            ) : (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                aria-disabled="true"
-                                                onClick={handleUnavailableAdd}
-                                                className="bg-slate-300 text-slate-600 rounded-lg cursor-not-allowed hover:bg-slate-300 opacity-80"
-                                            >
-                                                Ajouter un élément
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Ajoutez d&#39;abord une catégorie pour créer un élément.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                        </div>
+                    <AddCategoryDialog storeId={storeId}/>
+                    <div className="w-full sm:w-auto [&_button]:w-full">
+                        {hasCategories ? (
+                            <AddItemDialog storeId={storeId} categories={categories}/>
+                        ) : (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            aria-disabled="true"
+                                            onClick={handleUnavailableAdd}
+                                            className="bg-slate-300 text-slate-600 rounded-lg cursor-not-allowed hover:bg-slate-300 opacity-80"
+                                        >
+                                            Ajouter un élément
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Ajoutez d&#39;abord une catégorie pour créer un élément.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -193,9 +193,7 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                                             {items.filter((i) => i.categoryId === cat.id).length}
                                         </span>
                                     </div>
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <CategoryActions category={cat}/>
-                                    </div>
+                                    <CategoryActions category={cat}/>
                                 </div>
 
                                 {categoryItems.length === 0 ? (
