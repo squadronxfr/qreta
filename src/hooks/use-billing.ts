@@ -33,17 +33,18 @@ export function useBilling() {
     const onPlanAction = async (targetPlanKey: PlanKey) => {
         if (!user) return;
 
+        const isCancelingAlready = subscription?.cancelAtPeriodEnd;
+
         try {
             if (isSubscribed && hasStripeId) {
                 if (targetPlanKey === currentPlanKey) {
+                    if (isCancelingAlready) return;
                     await handlePortalStore(user, "cancel", window.location.href);
                     return;
                 }
-
                 await handlePortalStore(user, targetPlanKey, window.location.href);
                 return;
             }
-
             await handleCheckoutStore(user, targetPlanKey, window.location.href);
         } catch (error) {
             console.error("Plan action error:", error);

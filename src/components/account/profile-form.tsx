@@ -145,24 +145,6 @@ export function ProfileForm() {
                                 )}
                                 Gérer mon abonnement
                             </Button>
-                            {userData?.subscription?.plan !== "pro" && (
-                                <Button
-                                    variant="outline"
-                                    className="w-full border-indigo-200 text-indigo-700 hover:bg-indigo-50 rounded-xl"
-                                    onClick={() => userData?.subscription?.plan === "starter"
-                                        ? handlePortal("price_1Sxtex9mcp2EBniBDOFUCQEr")
-                                        : router.push("/billing")
-                                    }
-                                    disabled={!!isProcessing}
-                                >
-                                    {isProcessing === "portal_upgrade" ? (
-                                        <Spinner className="mr-2 h-4 w-4 animate-spin"/>
-                                    ) : (
-                                        <ArrowUpCircle className="mr-2 h-4 w-4"/>
-                                    )}
-                                    {userData?.subscription?.plan === "starter" ? "Passer au plan Pro" : "Voir les offres"}
-                                </Button>
-                            )}
                         </div>
                     </CardContent>
                 </Card>

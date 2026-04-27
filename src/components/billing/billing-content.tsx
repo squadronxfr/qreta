@@ -4,9 +4,18 @@ import {useSearchParams} from "next/navigation";
 import {useBilling} from "@/hooks/use-billing";
 import {SUBSCRIPTION_PLANS, PlanKey} from "@/config/subscription";
 import {
-    CreditCard, Shield, Check, ExternalLink,
-    Sparkles, AlertCircle, Zap, Crown, Download, History
+    CreditCard,
+    Shield,
+    Check,
+    ExternalLink,
+    Sparkles,
+    AlertCircle,
+    Zap,
+    Crown,
+    Download,
+    History
 } from "lucide-react";
+
 import {Spinner} from "@/components/ui/spinner";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
@@ -18,7 +27,6 @@ import {useEffect} from "react";
 
 const PLAN_ICONS = {
     free: Zap,
-    starter: Sparkles,
     pro: Crown,
 };
 
@@ -138,7 +146,7 @@ export default function BillingContent() {
                         <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                             <Sparkles className="h-5 w-5 text-indigo-600"/> Changer de formule
                         </h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4">
                             {(Object.keys(SUBSCRIPTION_PLANS) as PlanKey[])
                                 .filter(key => key !== "free")
                                 .map((key) => {
@@ -152,14 +160,13 @@ export default function BillingContent() {
                                             key={key}
                                             className={cn(
                                                 "relative rounded-2xl transition-all border",
-                                                isCurrent ? "border-indigo-600 ring-1 ring-indigo-600 shadow-md" : "border-slate-200 hover:border-indigo-200",
-                                                key === "pro" && !isCurrent && "bg-indigo-50/30 border-indigo-200"
+                                                isCurrent ? "border-indigo-600 ring-1 ring-indigo-600 shadow-md" : "border-indigo-200 bg-indigo-50/30 hover:border-indigo-300"
                                             )}
                                         >
-                                            {key === "pro" && !isCurrent && (
+                                            {!isCurrent && (
                                                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                                                     <Badge
-                                                        className="bg-indigo-600 text-white text-xs px-3">Populaire</Badge>
+                                                        className="bg-indigo-600 text-white text-xs px-3">Recommandé</Badge>
                                                 </div>
                                             )}
                                             <CardContent className="pt-6">
@@ -186,17 +193,16 @@ export default function BillingContent() {
                                                 </ul>
                                                 <Button
                                                     onClick={() => onPlanAction(key)}
-                                                    disabled={isDisabled}
+                                                    disabled={isDisabled || (isCurrent && !!cancelAtPeriodEnd)}
                                                     className={cn(
                                                         "w-full rounded-xl",
-                                                        isCurrent ? "bg-slate-100 text-slate-600 hover:bg-slate-200" : "bg-slate-900 hover:bg-slate-800 text-white",
-                                                        key === "pro" && !isCurrent && "bg-indigo-600 hover:bg-indigo-700"
+                                                        isCurrent ? "bg-slate-100 text-slate-600 hover:bg-slate-200" : "bg-indigo-600 hover:bg-indigo-700 text-white"
                                                     )}
                                                 >
                                                     {isProcessing === key && <Spinner className="mr-2 h-4 w-4"/>}
                                                     {isCurrent
-                                                        ? "Annuler l'abonnement"
-                                                        : (isSubscribed ? "Changer vers ce plan" : `Choisir ${plan.name}`)}
+                                                        ? cancelAtPeriodEnd ? "Annulation en cours" : "Annuler l'abonnement"
+                                                        : `Choisir ${plan.name}`}
                                                 </Button>
                                             </CardContent>
                                         </Card>

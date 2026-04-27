@@ -135,9 +135,7 @@ export default function SuperAdminPage() {
                                                             variant={
                                                                 user.subscription?.plan === "pro"
                                                                     ? "default"
-                                                                    : user.subscription?.plan === "starter"
-                                                                        ? "secondary"
-                                                                        : "outline"
+                                                                    : "secondary"
                                                             }
                                                             className="uppercase"
                                                         >

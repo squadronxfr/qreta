@@ -190,7 +190,6 @@ export function AdminUserActions({user, onUpdate}: AdminUserActionsProps) {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="free">Free</SelectItem>
-                                    <SelectItem value="starter">Starter</SelectItem>
                                     <SelectItem value="pro">Pro</SelectItem>
                                 </SelectContent>
                             </Select>

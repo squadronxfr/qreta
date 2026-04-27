@@ -31,8 +31,8 @@ export const PricingSection = () => (
                            className="text-4xl md:text-5xl font-bold mb-5 tracking-tight text-slate-900">
                     Un investissement ridicule.{" "}
                     <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-violet-600">
-    Une image pro.
-</span>
+                        Une image pro.
+                    </span>
                 </motion.h2>
                 <motion.p variants={fadeUp} className="text-slate-500 text-lg max-w-2xl mx-auto">
                     Des forfaits clairs pour accompagner votre activité, sans aucun frais caché.
@@ -44,16 +44,16 @@ export const PricingSection = () => (
                 whileInView="show"
                 viewport={{once: true, margin: "-50px"}}
                 variants={stagger}
-                className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto items-start"
+                className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto items-center"
             >
                 {Object.values(SUBSCRIPTION_PLANS).map((plan) => {
-                    const isHighlighted = plan.key === "starter";
+                    const isHighlighted = plan.key === "pro";
                     return (
                         <motion.div
                             key={plan.key}
                             variants={fadeUp}
                             whileHover={{y: -6}}
-                            className={`relative ${isHighlighted ? "md:-translate-y-6 z-10" : ""}`}
+                            className="relative"
                         >
                             {isHighlighted && (
                                 <div
@@ -66,10 +66,10 @@ export const PricingSection = () => (
                                         <div
                                             className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl"/>
                                         <div className="absolute top-0 inset-x-0 -mt-px flex justify-center">
-                <span
-                    className="bg-linear-to-r from-indigo-500 to-violet-500 text-white text-[10px] font-bold px-4 py-1 rounded-b-lg uppercase tracking-widest">
-                    Recommandé
-                    </span>
+                                            <span
+                                                className="bg-linear-to-r from-indigo-500 to-violet-500 text-white text-[10px] font-bold px-4 py-1 rounded-b-lg uppercase tracking-widest">
+                                                Recommandé
+                                            </span>
                                         </div>
                                     </>
                                 )}
@@ -79,9 +79,10 @@ export const PricingSection = () => (
                                         {plan.name}
                                     </CardTitle>
                                     <div className="mt-4 flex items-baseline gap-1">
-            <span className={`text-5xl font-bold ${isHighlighted ? "text-white" : "text-slate-900"}`}>
-            {plan.price}€
-            </span>
+                                        <span
+                                            className={`text-5xl font-bold ${isHighlighted ? "text-white" : "text-slate-900"}`}>
+                                            {plan.price}€
+                                        </span>
                                         <span
                                             className={isHighlighted ? "text-slate-400" : "text-slate-500"}>/mois TTC</span>
                                     </div>
@@ -110,7 +111,7 @@ export const PricingSection = () => (
                                         asChild
                                     >
                                         <Link href="/signup">
-                                            {plan.price === 0 ? "Commencer gratuitement" : "Essayer ce plan"}
+                                            {plan.price === 0 ? "Commencer gratuitement" : "Essayer Pro"}
                                         </Link>
                                     </Button>
                                 </CardFooter>

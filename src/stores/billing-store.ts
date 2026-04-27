@@ -94,7 +94,7 @@ export const createBillingStore = () => {
             try {
                 const headers = await getAuthHeaders(user);
 
-                const isPaidPlanKey = (k: string): k is Exclude<PlanKey, "free"> => k === "starter" || k === "pro";
+                const isPaidPlanKey = (k: string): k is Exclude<PlanKey, "free"> => k === "pro";
 
                 const body: {
                     userId: string;

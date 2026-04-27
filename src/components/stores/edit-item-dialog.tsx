@@ -366,7 +366,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                             <p className="text-xs text-slate-500">
                                 {canManageAvailability
                                     ? "Masquer ce produit du catalogue sans le supprimer."
-                                    : "Passez au plan Starter pour gérer les ruptures de stock."}
+                                    : "Passez au plan Pro pour gérer les ruptures de stock."}
                             </p>
                         </div>
 
@@ -384,7 +384,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p>Fonctionnalité réservée aux membres Starter & Pro</p>
+                                        <p>Fonctionnalité réservée aux membres Pro</p>
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>

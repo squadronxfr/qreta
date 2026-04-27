@@ -79,7 +79,7 @@ export const TERMS_OF_SERVICE = {
             id: "abonnements-facturation",
             title: "Article 6 : Formules, abonnements et facturation",
             content: [
-                "Qreta propose trois formules : 'Free' (gratuit, limité à 1 catalogue), 'Starter' (9€/mois, jusqu'à 3 catalogues) et 'Pro' (19€/mois, catalogues illimités).",
+                "Qreta propose trois formules : 'Free' (gratuit, limité à 1 catalogue), 'Pro' (9€/mois, catalogues illimités).",
                 "Les conditions tarifaires, fonctionnalités incluses et limitations de quotas sont précisées sur la plateforme lors de la souscription.",
                 "Lorsqu'un Abonnement payant est souscrit, l'Utilisateur accepte le prix indiqué au moment de la commande.",
                 "Le paiement est effectué via le prestataire sécurisé Stripe.",
