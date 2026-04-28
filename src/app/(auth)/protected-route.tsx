@@ -1,5 +1,4 @@
 "use client";
-
 import {useEffect, ReactNode, useState} from "react";
 import {useAuthStore} from "@/providers/auth-store-provider";
 import {useRouter} from "next/navigation";
@@ -15,12 +14,10 @@ export const ProtectedRoute = ({children, requiredRole}: ProtectedRouteProps) =>
     const userData = useAuthStore((s) => s.userData);
     const loading = useAuthStore((s) => s.loading);
     const router = useRouter();
-
     const [progress, setProgress] = useState(0);
 
     useEffect(() => {
         let interval: NodeJS.Timeout | null = null;
-
         if (loading) {
             setTimeout(() => setProgress(0), 0);
             interval = setInterval(() => {
@@ -35,7 +32,6 @@ export const ProtectedRoute = ({children, requiredRole}: ProtectedRouteProps) =>
         } else {
             setTimeout(() => setProgress(100), 0);
         }
-
         return () => {
             if (interval) clearInterval(interval);
         };
@@ -43,17 +39,19 @@ export const ProtectedRoute = ({children, requiredRole}: ProtectedRouteProps) =>
 
     useEffect(() => {
         if (loading) return;
-
         if (!user) {
             router.push("/login");
             return;
         }
-
         if (!user.emailVerified) {
             router.push("/verify-email");
             return;
         }
 
+        if (userData?.isBlocked) {
+            router.push("/blocked");
+            return;
+        }
         if (requiredRole && userData?.role !== requiredRole) {
             router.push(requiredRole === "superadmin" ? "/stores" : "/login");
         }
@@ -68,7 +66,7 @@ export const ProtectedRoute = ({children, requiredRole}: ProtectedRouteProps) =>
         );
     }
 
-    if (!user || !user.emailVerified || (requiredRole && userData?.role !== requiredRole)) {
+    if (!user || !user.emailVerified || userData?.isBlocked || (requiredRole && userData?.role !== requiredRole)) {
         return null;
     }
 

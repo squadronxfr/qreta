@@ -104,7 +104,10 @@ export function AdminUserActions({user, onUpdate}: AdminUserActionsProps) {
             const res = await fetch("/api/admin/toggle-block", {
                 method: "POST",
                 headers,
-                body: JSON.stringify({targetUserId: user.uid, isCurrentlyBlocked: !!user.isBlocked}),
+                body: JSON.stringify({
+                    targetUserId: user.uid,
+                    isCurrentlyBlocked: !!user.isBlocked,
+                }),
             });
             if (!res.ok) throw new Error();
             setShowBlockDialog(false);

@@ -83,16 +83,6 @@ export const updateUserSubscriptionAdmin = async (
     });
 };
 
-export const toggleUserBlock = async (
-    userId: string,
-    isCurrentlyBlocked: boolean
-): Promise<void> => {
-    await updateDoc(doc(db, "users", userId), {
-        isBlocked: !isCurrentlyBlocked,
-        updatedAt: Timestamp.now(),
-    });
-};
-
 export const deleteAccount = async (user: User) => {
     const storesQuery = query(collection(db, "stores"), where("userId", "==", user.uid));
     const storesSnapshot = await getDocs(storesQuery);
