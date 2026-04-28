@@ -125,12 +125,23 @@ export function ProfileForm() {
                         <div className="text-xs text-slate-400">
                             Statut :{" "}
                             <span
-                                className={`font-medium capitalize ${userData?.subscription?.status === "active" ? "text-green-600" : "text-orange-600"}`}>
-                                {userData?.subscription?.status === "active" ? "Actif" :
-                                    userData?.subscription?.status === "trialing" ? "Essai" :
-                                        userData?.subscription?.status === "canceled" ? "Annulé" :
-                                            userData?.subscription?.status || "Gratuit"}
-                            </span>
+                                className={`font-medium capitalize ${
+                                    userData?.subscription?.cancelAtPeriodEnd
+                                        ? "text-orange-600"
+                                        : userData?.subscription?.status === "active"
+                                            ? "text-green-600"
+                                            : "text-orange-600"
+                                }`}>
+        {userData?.subscription?.cancelAtPeriodEnd
+            ? "En cours d'annulation"
+            : userData?.subscription?.status === "active"
+                ? "Actif"
+                : userData?.subscription?.status === "trialing"
+                    ? "Essai"
+                    : userData?.subscription?.status === "canceled"
+                        ? "Annulé"
+                        : userData?.subscription?.status || "Gratuit"}
+    </span>
                         </div>
                         <div className="pt-2 flex flex-col gap-2">
                             <Button

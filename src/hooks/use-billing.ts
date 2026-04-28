@@ -23,6 +23,7 @@ export function useBilling() {
     const isProcessing = useBillingStore((s) => s.isProcessing);
     const handleCheckoutStore = useBillingStore((s) => s.handleCheckout);
     const handlePortalStore = useBillingStore((s) => s.handlePortal);
+    const handleReactivateStore = useBillingStore((s) => s.handleReactivate);
 
     const subscription = userData?.subscription;
     const currentPlanKey = (subscription?.plan as PlanKey) || "free";
@@ -33,12 +34,9 @@ export function useBilling() {
     const onPlanAction = async (targetPlanKey: PlanKey) => {
         if (!user) return;
 
-        const isCancelingAlready = subscription?.cancelAtPeriodEnd;
-
         try {
             if (isSubscribed && hasStripeId) {
                 if (targetPlanKey === currentPlanKey) {
-                    if (isCancelingAlready) return;
                     await handlePortalStore(user, "cancel", window.location.href);
                     return;
                 }
@@ -46,12 +44,10 @@ export function useBilling() {
                 return;
             }
             await handleCheckoutStore(user, targetPlanKey, window.location.href);
-        } catch (error) {
-            console.error("Plan action error:", error);
+        } catch {
             toast.error(isSubscribed ? "Impossible d'accéder au portail." : "Impossible d'initialiser le paiement.");
         }
     };
-
 
     const handlePortal = async (sourceKey: string = "portal_main") => {
         if (!user) return;
@@ -63,9 +59,18 @@ export function useBilling() {
 
         try {
             await handlePortalStore(user, sourceKey, window.location.href);
-        } catch (error) {
-            console.error("Portal error:", error);
+        } catch {
             toast.error("Impossible d'accéder au portail.");
+        }
+    };
+
+    const handleReactivate = async () => {
+        if (!user) return;
+
+        try {
+            await handleReactivateStore(user);
+        } catch {
+            toast.error("Impossible de réactiver l'abonnement.");
         }
     };
 
@@ -90,6 +95,7 @@ export function useBilling() {
         cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd,
         onPlanAction,
         handlePortal,
+        handleReactivate,
         userData,
     };
 }

@@ -13,7 +13,8 @@ import {
     Zap,
     Crown,
     Download,
-    History
+    History,
+    RefreshCw,
 } from "lucide-react";
 
 import {Spinner} from "@/components/ui/spinner";
@@ -50,6 +51,7 @@ export default function BillingContent() {
         cancelAtPeriodEnd,
         onPlanAction,
         handlePortal,
+        handleReactivate,
         userData,
     } = useBilling();
 
@@ -192,16 +194,24 @@ export default function BillingContent() {
                                                     ))}
                                                 </ul>
                                                 <Button
-                                                    onClick={() => onPlanAction(key)}
-                                                    disabled={isDisabled || (isCurrent && !!cancelAtPeriodEnd)}
+                                                    onClick={() => cancelAtPeriodEnd ? handleReactivate() : onPlanAction(key)}
+                                                    disabled={isDisabled}
                                                     className={cn(
                                                         "w-full rounded-xl",
-                                                        isCurrent ? "bg-slate-100 text-slate-600 hover:bg-slate-200" : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                                                        isCurrent && cancelAtPeriodEnd
+                                                            ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+                                                            : isCurrent
+                                                                ? "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                                                : "bg-indigo-600 hover:bg-indigo-700 text-white"
                                                     )}
                                                 >
                                                     {isProcessing === key && <Spinner className="mr-2 h-4 w-4"/>}
+                                                    {isProcessing === "reactivate" && isCurrent &&
+                                                        <Spinner className="mr-2 h-4 w-4"/>}
                                                     {isCurrent
-                                                        ? cancelAtPeriodEnd ? "Annulation en cours" : "Annuler l'abonnement"
+                                                        ? cancelAtPeriodEnd
+                                                            ? <><RefreshCw className="mr-2 h-4 w-4"/>Se réabonner</>
+                                                            : "Annuler l'abonnement"
                                                         : `Choisir ${plan.name}`}
                                                 </Button>
                                             </CardContent>

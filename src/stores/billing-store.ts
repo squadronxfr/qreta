@@ -22,6 +22,8 @@ export interface BillingActions {
     fetchInvoices: (user: User) => Promise<void>;
     handleCheckout: (user: User, targetPlanKey: PlanKey, returnUrl: string) => Promise<void>;
     handlePortal: (user: User, sourceKey: string, returnUrl: string) => Promise<void>;
+    // MODIFIÉ
+    handleReactivate: (user: User) => Promise<void>;
     reset: () => void;
 }
 
@@ -55,7 +57,7 @@ export const createBillingStore = () => {
                     const data = await res.json();
                     set({invoices: data.invoices || []});
                 }
-            } catch (error) {
+            } catch {
                 toast.error("Impossible de charger les factures. Réessayez plus tard.");
             } finally {
                 set({isLoadingInvoices: false});
@@ -129,6 +131,28 @@ export const createBillingStore = () => {
             }
         },
 
+        // MODIFIÉ
+        handleReactivate: async (user: User) => {
+            set({isProcessing: "reactivate"});
+
+            try {
+                const headers = await getAuthHeaders(user);
+                const res = await fetch("/api/stripe/reactivate", {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({userId: user.uid}),
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Erreur réactivation");
+
+                toast.success("Votre abonnement a été réactivé.");
+            } catch (error) {
+                throw error;
+            } finally {
+                set({isProcessing: null});
+            }
+        },
 
         reset: () => {
             set({invoices: [], isLoadingInvoices: false, isProcessing: null});
