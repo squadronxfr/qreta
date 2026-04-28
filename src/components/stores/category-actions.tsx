@@ -4,7 +4,7 @@ import {useState, SyntheticEvent, ChangeEvent} from "react";
 import {updateCategory, deleteCategory} from "@/lib/firebase/categories";
 import {Category} from "@/types/store";
 import {
-    Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+    Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -64,6 +64,9 @@ export function CategoryActions({category}: CategoryActionsProps) {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Renommer la catégorie</DialogTitle>
+                        <DialogDescription>
+                            Modifiez le nom de la section &quot;{category.name}&quot;.
+                        </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleUpdate} className="space-y-4 py-4">
                         <div className="space-y-2">

@@ -5,15 +5,6 @@ import {useBillingStore} from "@/providers/billing-store-provider";
 import {PlanKey} from "@/config/subscription";
 import {toast} from "sonner";
 
-export interface Invoice {
-    id: string;
-    amount: number;
-    status: string;
-    date: number;
-    pdf: string;
-    number: string;
-}
-
 export function useBilling() {
     const user = useAuthStore((s) => s.user);
     const userData = useAuthStore((s) => s.userData);

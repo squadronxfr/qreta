@@ -1,7 +1,7 @@
 import {notFound} from "next/navigation";
 import {adminDb} from "@/lib/firebase/admin";
 import {PublicStoreView} from "@/components/store-front/public-view";
-import {Store, Category, Item} from "@/types/store";
+import {Store, Category, Item, SerializedStore, SerializedItem} from "@/types/store";
 import {Metadata} from "next";
 import {PlanKey} from "@/config/subscription";
 
@@ -9,12 +9,18 @@ interface PageProps {
     params: Promise<{ slug: string }>;
 }
 
+async function getStoreBySlug(slug: string) {
+    const snap = await adminDb.collection("stores").where("slug", "==", slug).get();
+    if (snap.empty) return null;
+    return {doc: snap.docs[0], data: snap.docs[0].data() as Store};
+}
+
 export async function generateMetadata({params}: PageProps): Promise<Metadata> {
     const {slug} = await params;
-    const storesQuery = adminDb.collection("stores").where("slug", "==", slug);
-    const storeSnap = await storesQuery.get();
-    if (storeSnap.empty) return {title: "Catalogue introuvable - Qreta"};
-    const store = storeSnap.docs[0].data() as Store;
+    const result = await getStoreBySlug(slug);
+    if (!result) return {title: "Catalogue introuvable - Qreta"};
+
+    const store = result.data;
     return {
         title: `${store.name} | Catalogue`,
         description: store.description || `Découvrez le catalogue de ${store.name} sur Qreta.`,
@@ -22,22 +28,17 @@ export async function generateMetadata({params}: PageProps): Promise<Metadata> {
             title: store.name,
             description: store.description || "",
             images: store.bannerUrl ? [store.bannerUrl] : [],
-        }
+        },
     };
 }
 
 export default async function PublicStorePage({params}: PageProps) {
     const {slug} = await params;
+    const result = await getStoreBySlug(slug);
 
-    const storesQuery = adminDb.collection("stores").where("slug", "==", slug);
-    const storeSnap = await storesQuery.get();
+    if (!result) notFound();
 
-    if (storeSnap.empty) {
-        notFound();
-    }
-
-    const storeDoc = storeSnap.docs[0];
-    const storeData = storeDoc.data() as Store;
+    const {doc: storeDoc, data: storeData} = result;
 
     if (!storeData.isActive) {
         return (
@@ -47,8 +48,7 @@ export default async function PublicStorePage({params}: PageProps) {
                 </div>
                 <h1 className="text-xl font-bold text-slate-900 mb-2">Catalogue indisponible</h1>
                 <p className="text-slate-500 max-w-md">
-                    Ce catalogue est actuellement privé ou en maintenance.
-                    Revenez plus tard !
+                    Ce catalogue est actuellement privé ou en maintenance. Revenez plus tard !
                 </p>
             </div>
         );
@@ -56,40 +56,31 @@ export default async function PublicStorePage({params}: PageProps) {
 
     let isPro = false;
     if (storeData.userId) {
-        try {
-            const userDocRef = adminDb.collection("users").doc(storeData.userId);
-            const userDocSnap = await userDocRef.get();
-            if (userDocSnap.exists) {
-                const userData = userDocSnap.data();
-                const plan = (userData?.subscription?.plan as PlanKey) || "free";
-                isPro = plan === "pro";
-            }
-        } catch (error) {
-            console.error("Erreur récupération user plan:", error);
+        const userSnap = await adminDb.collection("users").doc(storeData.userId).get().catch(() => null);
+        if (userSnap?.exists) {
+            const plan = (userSnap.data()?.subscription?.plan as PlanKey) || "free";
+            isPro = plan === "pro";
         }
     }
 
-    const categoriesQuery = adminDb.collection("categories").where("storeId", "==", storeDoc.id);
-    const itemsQuery = adminDb.collection("items").where("storeId", "==", storeDoc.id);
-
     const [catsSnap, itemsSnap] = await Promise.all([
-        categoriesQuery.get(),
-        itemsQuery.get()
+        adminDb.collection("categories").where("storeId", "==", storeDoc.id).get(),
+        adminDb.collection("items").where("storeId", "==", storeDoc.id).get(),
     ]);
 
     const categories = catsSnap.docs
-        .map(d => ({id: d.id, ...d.data()} as Category))
-        .filter(c => c.isActive)
+        .map((d) => ({id: d.id, ...d.data()} as Category))
+        .filter((c) => c.isActive)
         .sort((a, b) => a.order - b.order);
 
     const items = itemsSnap.docs
-        .map(d => ({id: d.id, ...d.data()} as Item))
-        .filter(i => i.isActive)
+        .map((d) => ({id: d.id, ...d.data()} as Item))
+        .filter((i) => i.isActive)
         .sort((a, b) => a.order - b.order);
 
-    const serializedStore = JSON.parse(JSON.stringify({...storeData, id: storeDoc.id}));
-    const serializedCats = JSON.parse(JSON.stringify(categories));
-    const serializedItems = JSON.parse(JSON.stringify(items));
+    const serializedStore = JSON.parse(JSON.stringify({...storeData, id: storeDoc.id})) as SerializedStore;
+    const serializedCats = JSON.parse(JSON.stringify(categories)) as Category[];
+    const serializedItems = JSON.parse(JSON.stringify(items)) as SerializedItem[];
 
     return (
         <PublicStoreView

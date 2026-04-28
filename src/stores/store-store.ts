@@ -31,42 +31,50 @@ export const createStoreStore = () => {
         subscribe: (userId: string) => {
             let unsubItems: Unsubscribe | null = null;
 
-            const unsubStores = subscribeToUserStores(userId, (stores) => {
-                set({stores, isLoading: false});
+            const unsubStores = subscribeToUserStores(
+                userId,
+                (stores) => {
+                    set({stores, isLoading: false});
 
-                if (unsubItems) unsubItems();
+                    if (unsubItems) unsubItems();
 
-                const storeIds = stores.map((s) => s.id);
-                if (storeIds.length === 0) {
-                    set({countsMap: {}});
-                    return;
-                }
-
-                const q = query(
-                    collection(db, "items"),
-                    where("storeId", "in", storeIds.slice(0, 30))
-                );
-
-                unsubItems = onSnapshot(q, (snap) => {
-                    const map: Record<string, StoreCounts> = {};
-
-                    for (const storeId of storeIds) {
-                        map[storeId] = {products: 0, services: 0};
+                    const storeIds = stores.map((s) => s.id);
+                    if (storeIds.length === 0) {
+                        set({countsMap: {}});
+                        return;
                     }
 
-                    for (const d of snap.docs) {
-                        const item = d.data() as Item;
-                        if (!map[item.storeId]) continue;
-                        if (item.type === "product") {
-                            map[item.storeId].products++;
-                        } else {
-                            map[item.storeId].services++;
+                    const q = query(
+                        collection(db, "items"),
+                        where("storeId", "in", storeIds.slice(0, 30))
+                    );
+
+                    unsubItems = onSnapshot(q, (snap) => {
+                        const map: Record<string, StoreCounts> = {};
+
+                        for (const storeId of storeIds) {
+                            map[storeId] = {products: 0, services: 0};
                         }
-                    }
 
-                    set({countsMap: map});
-                });
-            });
+                        for (const d of snap.docs) {
+                            const item = d.data() as Item;
+                            if (!map[item.storeId]) continue;
+                            if (item.type === "product") {
+                                map[item.storeId].products++;
+                            } else {
+                                map[item.storeId].services++;
+                            }
+                        }
+
+                        set({countsMap: map});
+                    }, () => {
+                        set({countsMap: {}});
+                    });
+                },
+                () => {
+                    set({stores: [], isLoading: false});
+                }
+            );
 
             return () => {
                 unsubStores();

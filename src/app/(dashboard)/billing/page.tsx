@@ -1,4 +1,3 @@
-// MODIFIÉ : page.tsx devient un wrapper Suspense
 import {Suspense} from "react";
 import {Spinner} from "@/components/ui/spinner";
 import BillingContent from "@/components/billing/billing-content";

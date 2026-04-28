@@ -49,7 +49,7 @@ export const createBillingStore = () => {
                 const res = await fetch("/api/stripe/invoices", {
                     method: "POST",
                     headers,
-                    body: JSON.stringify({userId: user.uid}),
+                    body: JSON.stringify({}),
                 });
 
                 if (res.ok) {
@@ -138,7 +138,7 @@ export const createBillingStore = () => {
                 const res = await fetch("/api/stripe/reactivate", {
                     method: "POST",
                     headers,
-                    body: JSON.stringify({userId: user.uid}),
+                    body: JSON.stringify({}),
                 });
 
                 const data = await res.json();

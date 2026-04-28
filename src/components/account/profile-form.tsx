@@ -4,7 +4,6 @@ import {SyntheticEvent} from "react";
 import {useProfileForm} from "@/hooks/use-profile-form";
 import {useDeleteAccount} from "@/hooks/use-delete-account";
 import {useBilling} from "@/hooks/use-billing";
-import {useRouter} from "next/navigation";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
@@ -27,7 +26,6 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export function ProfileForm() {
-    const router = useRouter();
     const {handlePortal, isProcessing} = useBilling();
 
     const {
@@ -69,7 +67,7 @@ export function ProfileForm() {
                     <CardHeader className="text-center pb-2 pt-8">
                         <div className="mx-auto relative group w-32 h-32 mb-4">
                             <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                                <AvatarImage src={avatarPreview || ""} className="object-cover"/>
+                                <AvatarImage src={avatarPreview ?? undefined} className="object-cover"/>
                                 <AvatarFallback className="text-3xl bg-indigo-100 text-indigo-600 font-bold">
                                     {getInitials()}
                                 </AvatarFallback>

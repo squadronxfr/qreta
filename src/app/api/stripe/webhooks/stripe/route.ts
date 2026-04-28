@@ -3,9 +3,8 @@ import {NextResponse} from "next/server";
 import {stripe} from "@/lib/stripe";
 import {getPlanByPriceId} from "@/config/subscription";
 import {adminDb} from "@/lib/firebase/admin";
-import {Timestamp} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import Stripe from "stripe";
-
 
 const toFirestoreTimestamp = (seconds: number | null | undefined): Timestamp => {
     if (!seconds) return Timestamp.now();
@@ -17,13 +16,10 @@ async function updateUserSubscription(
     subscription: Stripe.Subscription,
     customerId?: string
 ) {
-    if (!userId) {
-        return;
-    }
+    if (!userId) return;
 
     const priceId = subscription.items.data[0]?.price.id;
     const planId = getPlanByPriceId(priceId);
-
 
     const isCanceled = subscription.cancel_at_period_end || !!subscription.cancel_at;
     const currentPeriodEnd = toFirestoreTimestamp(subscription.items.data[0]?.current_period_end);
@@ -37,7 +33,7 @@ async function updateUserSubscription(
         "subscription.cancelAtPeriodEnd": isCanceled,
         "subscription.stripeSubscriptionId": subscription.id,
         "subscription.stripePriceId": priceId,
-        "updatedAt": Timestamp.now()
+        updatedAt: FieldValue.serverTimestamp(),
     };
 
     if (customerId) {
@@ -61,8 +57,16 @@ export async function POST(req: Request) {
             process.env.STRIPE_WEBHOOK_SECRET!
         );
     } catch (err) {
-        return new NextResponse(`Webhook Error: ${err instanceof Error ? err.message : "Unknown"}`, {status: 400});
+        return new NextResponse(
+            `Webhook Error: ${err instanceof Error ? err.message : "Unknown"}`,
+            {status: 400}
+        );
     }
+
+    const webhookRef = adminDb.collection("processedWebhooks").doc(event.id);
+    const existing = await webhookRef.get();
+    if (existing.exists) return new NextResponse(null, {status: 200});
+    await webhookRef.set({processedAt: FieldValue.serverTimestamp()});
 
     try {
         switch (event.type) {
@@ -71,7 +75,6 @@ export async function POST(req: Request) {
                 if (session.subscription) {
                     const sub = await stripe.subscriptions.retrieve(session.subscription as string);
                     const userId = session.client_reference_id || session.metadata?.userId;
-
                     if (userId) {
                         await updateUserSubscription(userId, sub, session.customer as string);
                     }
@@ -84,7 +87,8 @@ export async function POST(req: Request) {
                 const subFromEvent = event.data.object as Stripe.Subscription;
                 const fullSub = await stripe.subscriptions.retrieve(subFromEvent.id);
 
-                const usersSnap = await adminDb.collection("users")
+                const usersSnap = await adminDb
+                    .collection("users")
                     .where("subscription.stripeCustomerId", "==", fullSub.customer)
                     .limit(1)
                     .get();
@@ -95,7 +99,9 @@ export async function POST(req: Request) {
                 break;
             }
         }
-    } catch {
+    } catch (error) {
+        console.error("[Stripe Webhook]", error);
+        await webhookRef.delete();
         return new NextResponse("Internal Server Error", {status: 500});
     }
 

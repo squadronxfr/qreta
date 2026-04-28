@@ -2,7 +2,6 @@ import {db, storage} from "@/lib/firebase/config";
 import {
     collection,
     doc,
-    addDoc,
     updateDoc,
     query,
     where,
@@ -14,36 +13,7 @@ import {
     writeBatch,
 } from "firebase/firestore";
 import {Store} from "@/types/store";
-import {generateSlug, checkSlugAvailability} from "@/lib/utils/slug";
 import {deleteObject, ref} from "firebase/storage";
-
-interface CreateStoreData {
-    name: string;
-    description: string;
-}
-
-export const createStore = async (userId: string, data: CreateStoreData): Promise<string> => {
-    const baseSlug = generateSlug(data.name);
-    const uniqueSlug = await checkSlugAvailability(baseSlug);
-
-    const docRef = await addDoc(collection(db, "stores"), {
-        ...data,
-        slug: uniqueSlug,
-        userId,
-        isActive: false,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        logoUrl: "",
-        bannerUrl: "",
-        phone: "",
-        instagram: "",
-        address: "",
-        website: "",
-        primaryColor: "#4F46E5",
-    });
-
-    return docRef.id;
-};
 
 export const updateStore = async (
     storeId: string,
@@ -73,12 +43,8 @@ export const deleteStore = async (storeId: string): Promise<void> => {
 
     if (storeSnap.exists()) {
         const data = storeSnap.data() as Partial<Store>;
-        if (data.logoUrl) {
-            await deleteObject(ref(storage, data.logoUrl)).catch(() => null);
-        }
-        if (data.bannerUrl) {
-            await deleteObject(ref(storage, data.bannerUrl)).catch(() => null);
-        }
+        if (data.logoUrl) await deleteObject(ref(storage, data.logoUrl)).catch(() => null);
+        if (data.bannerUrl) await deleteObject(ref(storage, data.bannerUrl)).catch(() => null);
     }
 
     const docsToDelete = [...itemsSnap.docs, ...categoriesSnap.docs];
@@ -97,26 +63,19 @@ export const deleteStore = async (storeId: string): Promise<void> => {
     }
 
     batch.delete(storeRef);
-    count++;
-
-    if (count > 0) {
-        await batch.commit();
-    }
+    await batch.commit();
 };
 
 export const subscribeToUserStores = (
     userId: string,
-    callback: (stores: Store[]) => void
+    callback: (stores: Store[]) => void,
+    onError?: () => void
 ): Unsubscribe => {
     const q = query(collection(db, "stores"), where("userId", "==", userId));
-
     return onSnapshot(q, (snapshot) => {
-        const stores = snapshot.docs.map((d) => ({
-            id: d.id,
-            ...d.data(),
-        })) as Store[];
+        const stores = snapshot.docs.map((d) => ({id: d.id, ...d.data()})) as Store[];
         callback(stores);
-    });
+    }, onError);
 };
 
 export const subscribeToStore = (

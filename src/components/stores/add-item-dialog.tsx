@@ -3,7 +3,7 @@ import {useState, SyntheticEvent, ChangeEvent, useRef} from "react";
 import {createItem} from "@/lib/firebase/items";
 import {
     Dialog,
-    DialogContent,
+    DialogContent, DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -113,6 +113,9 @@ export function AddItemDialog({storeId, categories}: AddItemDialogProps) {
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-2xl">
                 <DialogHeader>
                     <DialogTitle className="font-heading">Ajouter un élément</DialogTitle>
+                    <DialogDescription>
+                        Renseignez les informations de votre produit ou service.
+                    </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-5 py-4">
                     <div className="grid grid-cols-2 gap-4">

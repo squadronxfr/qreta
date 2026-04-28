@@ -2,7 +2,7 @@ import {NextResponse} from "next/server";
 import Stripe from "stripe";
 import {stripe} from "@/lib/stripe";
 import {adminDb} from "@/lib/firebase/admin";
-import {verifyAuthToken} from "@/lib/firebase/auth-api";
+import {verifyAuthToken, AuthError} from "@/lib/firebase/auth-api";
 import {SUBSCRIPTION_PLANS} from "@/config/subscription";
 import {sanitizeReturnUrl} from "@/lib/utils";
 
@@ -24,7 +24,6 @@ function getAppOrigin(req: Request): string {
     if (env) return new URL(env).origin;
     return new URL(req.url).origin;
 }
-
 
 function allowedPriceIds(): string[] {
     return Object.values(SUBSCRIPTION_PLANS)
@@ -136,17 +135,13 @@ export async function POST(req: Request) {
         const session = await stripe.billingPortal.sessions.create(portalParams);
         return NextResponse.json({url: session.url});
     } catch (error: unknown) {
-        if (error instanceof Error && error.message.includes("Authorization")) {
+        if (error instanceof AuthError) {
             return NextResponse.json({error: "Unauthorized"}, {status: 401});
         }
-
-        console.error("[STRIPE_PORTAL]", error);
-
-        const maybeStripe = error as { type?: unknown; message?: unknown };
-        if (maybeStripe?.type === "StripeInvalidRequestError") {
-            return NextResponse.json({error: typeof maybeStripe.message === "string" ? maybeStripe.message : "Bad request"}, {status: 400});
+        if (error instanceof Stripe.errors.StripeError) {
+            return NextResponse.json({error: error.message}, {status: 400});
         }
-
+        console.error("[STRIPE_PORTAL]", error);
         return NextResponse.json({error: "Internal Error"}, {status: 500});
     }
 }

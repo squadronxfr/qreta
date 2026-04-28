@@ -46,7 +46,6 @@ export default function BillingContent() {
         isLoadingInvoices,
         isProcessing,
         currentPlanKey,
-        isSubscribed,
         renewalDate,
         cancelAtPeriodEnd,
         onPlanAction,
@@ -119,7 +118,7 @@ export default function BillingContent() {
                             </div>
                             <p className="text-sm text-slate-500 mb-6 font-medium">
                                 {currentPlanKey === "free" ? (
-                                    "Plan gratuit à vie."
+                                    "Plan gratuit"
                                 ) : cancelAtPeriodEnd ? (
                                     <span
                                         className="text-orange-600">Votre abonnement se termine le {renewalDate}</span>

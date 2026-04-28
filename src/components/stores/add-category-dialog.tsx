@@ -4,7 +4,7 @@ import {useState, SyntheticEvent, ChangeEvent} from "react";
 import {createCategory} from "@/lib/firebase/categories";
 import {
     Dialog,
-    DialogContent,
+    DialogContent, DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -47,6 +47,9 @@ export function AddCategoryDialog({storeId}: { storeId: string }) {
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Ajouter une catégorie</DialogTitle>
+                    <DialogDescription>
+                        Donnez un nom à votre nouvelle section de catalogue.
+                    </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 py-4">
                     <div className="space-y-2">

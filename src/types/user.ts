@@ -11,6 +11,7 @@ export interface UserSubscription {
     stripeSubscriptionId?: string;
     stripePriceId?: string;
     cancelAtPeriodEnd?: boolean;
+    cancelAt?: Timestamp | null;
 }
 
 export interface UserDoc {

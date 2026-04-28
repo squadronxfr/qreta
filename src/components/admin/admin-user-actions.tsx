@@ -182,6 +182,9 @@ export function AdminUserActions({user, onUpdate}: AdminUserActionsProps) {
                 <DialogContent className="rounded-2xl">
                     <DialogHeader>
                         <DialogTitle>Profil de {user.firstname} {user.lastname}</DialogTitle>
+                        <DialogDescription>
+                            Informations détaillées du compte utilisateur.
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-3 text-sm">
                         <div className="flex justify-between">
@@ -293,8 +296,8 @@ export function AdminUserActions({user, onUpdate}: AdminUserActionsProps) {
                         </DialogTitle>
                         <DialogDescription>
                             {user.isBlocked
-                                ? "L'utilisateur pourra de nouveau accéder à son compte."
-                                : "L'utilisateur ne pourra plus accéder à son compte."}
+                                ? "L&apos;utilisateur pourra de nouveau acc\u00e9der \u00e0 son compte."
+                                : "L&apos;utilisateur ne pourra plus acc\u00e9der \u00e0 son compte."}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -320,7 +323,7 @@ export function AdminUserActions({user, onUpdate}: AdminUserActionsProps) {
                         <DialogTitle className="text-red-600">Supprimer le compte
                             de {user.firstname} {user.lastname} ?</DialogTitle>
                         <DialogDescription>
-                            Cette action est irréversible. L'abonnement Stripe sera annulé immédiatement, tous les
+                            Cette action est irréversible. L&apos;abonnement Stripe sera annulé immédiatement, tous les
                             catalogues et données seront supprimés.
                         </DialogDescription>
                     </DialogHeader>

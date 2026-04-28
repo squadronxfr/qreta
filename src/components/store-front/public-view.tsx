@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useState, useEffect} from "react";
-import {Store, Category, Item} from "@/types/store";
+import {Category, SerializedItem, SerializedStore} from "@/types/store";
 import {motion, AnimatePresence} from "framer-motion";
 import {
     Phone, Instagram, Globe, MapPin, Clock,
@@ -17,15 +17,15 @@ import Link from "next/link";
 import Image from "next/image";
 
 interface PublicViewProps {
-    store: Store;
+    store: SerializedStore;
     categories: Category[];
-    items: Item[];
+    items: SerializedItem[];
     isPro: boolean;
 }
 
 export function PublicStoreView({store, categories, items, isPro}: PublicViewProps) {
     const [activeCategory, setActiveCategory] = useState<string>(categories[0]?.id || "");
-    const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+    const [selectedItem, setSelectedItem] = useState<SerializedItem | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [scrolled, setScrolled] = useState(false);
 
@@ -42,7 +42,7 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                 }
             }
         };
-        window.addEventListener("scroll", handleScroll);
+        window.addEventListener("scroll", handleScroll, {passive: true});
         return () => window.removeEventListener("scroll", handleScroll);
     }, [categories]);
 
@@ -71,14 +71,21 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
 
             <div className="relative w-full h-[35vh] md:h-[40vh] overflow-hidden bg-slate-900">
                 {store.bannerUrl ? (
-                    <motion.img
+                    <motion.div
+                        className="w-full h-full relative"
                         initial={{scale: 1.1}}
                         animate={{scale: 1}}
                         transition={{duration: 1.5}}
-                        src={store.bannerUrl}
-                        alt="Cover"
-                        className="w-full h-full object-cover opacity-80"
-                    />
+                    >
+                        <Image
+                            src={store.bannerUrl}
+                            alt="Cover"
+                            fill
+                            priority
+                            sizes="100vw"
+                            className="object-cover opacity-80"
+                        />
+                    </motion.div>
                 ) : (
                     <div className="w-full h-full bg-linear-to-br from-slate-800 to-slate-900"/>
                 )}
@@ -91,7 +98,7 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                         className="flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-end"
                     >
                         <div
-                            className="h-16 w-16 md:h-24 md:w-24 rounded-2xl md:rounded-3xl border-4 border-white/10 bg-white shadow-2xl overflow-hidden flex-shrink-0 backdrop-blur-sm">
+                            className="h-16 w-16 md:h-24 md:w-24 rounded-2xl md:rounded-3xl border-4 border-white/10 bg-white shadow-2xl overflow-hidden shrink-0 backdrop-blur-sm relative">
                             {store.logoUrl ? (
                                 <Image src={store.logoUrl} fill sizes="96px" className="object-cover" alt="Logo"/>
                             ) : (
