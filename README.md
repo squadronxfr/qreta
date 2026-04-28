@@ -147,7 +147,4 @@ src/
 - Standard Next.js deployment flow. Build with `npm run build` and run with `npm start`.
 - TODO: Document target hosting provider, environment variable management, and webhook configuration for production.
 
-## License
-
-- No `LICENSE` file found.
-- TODO: Add a license (e.g., MIT) or clarify the project’s licensing terms.
+## Licence
