@@ -12,9 +12,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
 import {
-    Save, User, Lock,
-    Camera, Trash2, Sparkles, AlertTriangle, ArrowUpCircle, ExternalLink,
-    Mail
+    Save, User, Lock, Camera, Trash2, Sparkles, AlertTriangle, ExternalLink, Mail
 } from "lucide-react";
 import {Spinner} from "@/components/ui/spinner";
 import {
@@ -61,6 +59,7 @@ export function ProfileForm() {
         setDeletePassword,
         isDeleting,
         handleDelete,
+        hasActiveSubscription,
     } = useDeleteAccount();
 
     return (
@@ -124,24 +123,23 @@ export function ProfileForm() {
                         </div>
                         <div className="text-xs text-slate-400">
                             Statut :{" "}
-                            <span
-                                className={`font-medium capitalize ${
-                                    userData?.subscription?.cancelAtPeriodEnd
-                                        ? "text-orange-600"
-                                        : userData?.subscription?.status === "active"
-                                            ? "text-green-600"
-                                            : "text-orange-600"
-                                }`}>
-        {userData?.subscription?.cancelAtPeriodEnd
-            ? "En cours d'annulation"
-            : userData?.subscription?.status === "active"
-                ? "Actif"
-                : userData?.subscription?.status === "trialing"
-                    ? "Essai"
-                    : userData?.subscription?.status === "canceled"
-                        ? "Annulé"
-                        : userData?.subscription?.status || "Gratuit"}
-    </span>
+                            <span className={`font-medium ${
+                                userData?.subscription?.cancelAtPeriodEnd
+                                    ? "text-orange-600"
+                                    : userData?.subscription?.status === "active"
+                                        ? "text-green-600"
+                                        : "text-orange-600"
+                            }`}>
+                                {userData?.subscription?.cancelAtPeriodEnd
+                                    ? "En cours d'annulation"
+                                    : userData?.subscription?.status === "active"
+                                        ? "Actif"
+                                        : userData?.subscription?.status === "trialing"
+                                            ? "Essai"
+                                            : userData?.subscription?.status === "canceled"
+                                                ? "Annulé"
+                                                : userData?.subscription?.status || "Gratuit"}
+                            </span>
                         </div>
                         <div className="pt-2 flex flex-col gap-2">
                             <Button
@@ -296,40 +294,50 @@ export function ProfileForm() {
                             </AlertDialogTrigger>
                             <AlertDialogContent className="rounded-2xl">
                                 <AlertDialogHeader>
-                                    <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
+                                    <AlertDialogTitle>
+                                        {hasActiveSubscription ? "Abonnement actif détecté" : "Êtes-vous absolument sûr ?"}
+                                    </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Cette action est irréversible. Toutes vos données seront perdues définitivement.
+                                        {hasActiveSubscription
+                                            ? "Vous avez un abonnement Pro en cours. Annulez-le d'abord depuis la page Facturation avant de supprimer votre compte."
+                                            : "Cette action est irréversible. Toutes vos données seront perdues définitivement."}
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
-                                <div className="py-4">
-                                    <Label htmlFor="delete-password" className="text-sm font-medium">
-                                        Confirmez avec votre mot de passe
-                                    </Label>
-                                    <Input
-                                        id="delete-password"
-                                        type="password"
-                                        value={deletePassword}
-                                        onChange={(e) => setDeletePassword(e.target.value)}
-                                        placeholder="Entrez votre mot de passe"
-                                        className="mt-2 rounded-xl"
-                                    />
-                                </div>
+                                {!hasActiveSubscription && (
+                                    <div className="py-4">
+                                        <Label htmlFor="delete-password" className="text-sm font-medium">
+                                            Confirmez avec votre mot de passe
+                                        </Label>
+                                        <Input
+                                            id="delete-password"
+                                            type="password"
+                                            value={deletePassword}
+                                            onChange={(e) => setDeletePassword(e.target.value)}
+                                            placeholder="Entrez votre mot de passe"
+                                            className="mt-2 rounded-xl"
+                                        />
+                                    </div>
+                                )}
                                 <AlertDialogFooter>
-                                    <AlertDialogCancel className="rounded-xl cursor-pointer">Annuler</AlertDialogCancel>
-                                    <Button
-                                        onClick={handleDelete}
-                                        disabled={isDeleting}
-                                        className="bg-red-600 hover:bg-red-700 rounded-xl cursor-pointer"
-                                    >
-                                        {isDeleting ? (
-                                            <>
-                                                <Spinner className="mr-2 h-4 w-4"/>
-                                                Suppression...
-                                            </>
-                                        ) : (
-                                            "Confirmer la suppression"
-                                        )}
-                                    </Button>
+                                    <AlertDialogCancel className="rounded-xl cursor-pointer">
+                                        {hasActiveSubscription ? "Fermer" : "Annuler"}
+                                    </AlertDialogCancel>
+                                    {!hasActiveSubscription && (
+                                        <Button
+                                            onClick={handleDelete}
+                                            disabled={isDeleting}
+                                            className="bg-red-600 hover:bg-red-700 rounded-xl cursor-pointer"
+                                        >
+                                            {isDeleting ? (
+                                                <>
+                                                    <Spinner className="mr-2 h-4 w-4"/>
+                                                    Suppression...
+                                                </>
+                                            ) : (
+                                                "Confirmer la suppression"
+                                            )}
+                                        </Button>
+                                    )}
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
