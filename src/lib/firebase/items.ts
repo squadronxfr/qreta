@@ -26,6 +26,7 @@ interface CreateItemData {
     duration?: number | null;
     isOnPromotion?: boolean;
     discountPercentage?: number;
+    isAvailable?: boolean;
 }
 
 export const createItem = async (
@@ -46,6 +47,7 @@ export const createItem = async (
         imageUrl,
         order: Date.now(),
         isActive: true,
+        isAvailable: true,
         createdAt: serverTimestamp(),
     };
 

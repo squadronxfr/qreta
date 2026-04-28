@@ -200,17 +200,25 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                                         onClick={() => setSelectedItem(item)}
                                         className="group relative bg-white p-2.5 md:p-3 rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-indigo-100 transition-all cursor-pointer flex gap-3 md:gap-4 overflow-hidden"
                                     >
+                                        {item.isAvailable === false && (
+                                            <div
+                                                className="absolute inset-0 z-10 rounded-2xl bg-slate-100/70 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                                                <span
+                                                    className="text-[10px] font-bold uppercase tracking-wide bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full shadow-sm">
+                                                    Indisponible
+                                                </span>
+                                            </div>
+                                        )}
                                         <div
-                                            className="h-20 w-20 md:h-24 md:w-24 shrink-0 rounded-xl overflow-hidden bg-slate-50 relative border border-slate-100">
-                                            {item.imageUrl ? (
-                                                <Image src={item.imageUrl} alt={item.name} fill sizes="96px"
-                                                       className="object-cover group-hover:scale-110 transition-transform duration-500"/>
-                                            ) : (
-                                                <div
-                                                    className="h-full w-full flex items-center justify-center bg-slate-50">
-                                                    <ImageIcon className="h-6 w-6 md:h-8 md:w-8 text-slate-300/50"/>
-                                                </div>
-                                            )}
+                                            className="h-20 w-20 md:h-24 md:w-24 shrink-0 rounded-xl overflow-hidden bg-slate-50 relative border border-slate-100">{item.imageUrl ? (
+                                            <Image src={item.imageUrl} alt={item.name} fill sizes="96px"
+                                                   className="object-cover group-hover:scale-110 transition-transform duration-500"/>
+                                        ) : (
+                                            <div
+                                                className="h-full w-full flex items-center justify-center bg-slate-50">
+                                                <ImageIcon className="h-6 w-6 md:h-8 md:w-8 text-slate-300/50"/>
+                                            </div>
+                                        )}
                                         </div>
 
                                         <div className="flex-1 flex flex-col justify-between py-0.5">
@@ -316,12 +324,20 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
                                         <h3 className="text-2xl font-bold font-heading text-slate-900 mb-1">{selectedItem.name}</h3>
-                                        {selectedItem.duration && (
-                                            <Badge variant="secondary"
-                                                   className="font-normal text-xs bg-slate-100 text-slate-500 hover:bg-slate-100">
-                                                Durée : {selectedItem.duration} min
-                                            </Badge>
-                                        )}
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {selectedItem.duration && (
+                                                <Badge variant="secondary"
+                                                       className="font-normal text-xs bg-slate-100 text-slate-500 hover:bg-slate-100">
+                                                    Durée : {selectedItem.duration} min
+                                                </Badge>
+                                            )}
+                                            {selectedItem.isAvailable === false && (
+                                                <Badge
+                                                    className="text-xs bg-slate-200 text-slate-500 border-none hover:bg-slate-200">
+                                                    Indisponible
+                                                </Badge>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="text-right">
                                         {selectedItem.isOnPromotion && selectedItem.discountPercentage ? (

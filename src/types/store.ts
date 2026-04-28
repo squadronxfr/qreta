@@ -41,5 +41,6 @@ export interface Item {
     isActive: boolean;
     isOnPromotion?: boolean;
     discountPercentage?: number;
+    isAvailable?: boolean;
     createdAt: Timestamp;
 }
