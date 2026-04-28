@@ -11,14 +11,14 @@ export const useDeleteAccount = () => {
     const user = useAuthStore((s) => s.user);
     const deleteUserAccount = useAuthStore((s) => s.deleteUserAccount);
     const logout = useAuthStore((s) => s.logout);
-    const {isSubscribed, cancelAtPeriodEnd} = useBilling();
+    const {isSubscribed, cancelAtPeriodEnd, currentPlanKey} = useBilling();
     const router = useRouter();
 
     const [showDialog, setShowDialog] = useState(false);
     const [deletePassword, setDeletePassword] = useState("");
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const hasActiveSubscription = isSubscribed && !cancelAtPeriodEnd;
+    const hasActiveSubscription = isSubscribed && !cancelAtPeriodEnd && currentPlanKey !== "free";
 
     const handleDelete = async () => {
         if (!user || !user.email) return;

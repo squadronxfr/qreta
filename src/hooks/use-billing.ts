@@ -20,7 +20,7 @@ export function useBilling() {
     const currentPlanKey = (subscription?.plan as PlanKey) || "free";
 
     const isSubscribed = ["active", "trialing", "past_due"].includes(subscription?.status || "");
-    const hasStripeId = !!subscription?.stripeCustomerId;
+    const hasStripeId = !!subscription?.stripeCustomerId && currentPlanKey !== "free";
 
     const onPlanAction = async (targetPlanKey: PlanKey) => {
         if (!user) return;
