@@ -22,7 +22,6 @@ export interface BillingActions {
     fetchInvoices: (user: User) => Promise<void>;
     handleCheckout: (user: User, targetPlanKey: PlanKey, returnUrl: string) => Promise<void>;
     handlePortal: (user: User, sourceKey: string, returnUrl: string) => Promise<void>;
-    // MODIFIÉ
     handleReactivate: (user: User) => Promise<void>;
     reset: () => void;
 }
@@ -131,7 +130,6 @@ export const createBillingStore = () => {
             }
         },
 
-        // MODIFIÉ
         handleReactivate: async (user: User) => {
             set({isProcessing: "reactivate"});
 
