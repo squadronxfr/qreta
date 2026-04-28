@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useState, useEffect} from "react";
-import {Store, Category, Item} from "@/types/store";
+import {Category, SerializedItem, SerializedStore} from "@/types/store";
 import {motion, AnimatePresence} from "framer-motion";
 import {
     Phone, Instagram, Globe, MapPin, Clock,
@@ -14,17 +14,18 @@ import {Dialog, DialogContent, DialogTitle} from "@/components/ui/dialog";
 import {ScrollArea, ScrollBar} from "@/components/ui/scroll-area";
 import {cn} from "@/lib/utils";
 import Link from "next/link";
+import Image from "next/image";
 
 interface PublicViewProps {
-    store: Store;
+    store: SerializedStore;
     categories: Category[];
-    items: Item[];
+    items: SerializedItem[];
     isPro: boolean;
 }
 
 export function PublicStoreView({store, categories, items, isPro}: PublicViewProps) {
     const [activeCategory, setActiveCategory] = useState<string>(categories[0]?.id || "");
-    const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+    const [selectedItem, setSelectedItem] = useState<SerializedItem | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [scrolled, setScrolled] = useState(false);
 
@@ -41,7 +42,7 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                 }
             }
         };
-        window.addEventListener("scroll", handleScroll);
+        window.addEventListener("scroll", handleScroll, {passive: true});
         return () => window.removeEventListener("scroll", handleScroll);
     }, [categories]);
 
@@ -70,14 +71,21 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
 
             <div className="relative w-full h-[35vh] md:h-[40vh] overflow-hidden bg-slate-900">
                 {store.bannerUrl ? (
-                    <motion.img
+                    <motion.div
+                        className="w-full h-full relative"
                         initial={{scale: 1.1}}
                         animate={{scale: 1}}
                         transition={{duration: 1.5}}
-                        src={store.bannerUrl}
-                        alt="Cover"
-                        className="w-full h-full object-cover opacity-80"
-                    />
+                    >
+                        <Image
+                            src={store.bannerUrl}
+                            alt="Cover"
+                            fill
+                            priority
+                            sizes="100vw"
+                            className="object-cover opacity-80"
+                        />
+                    </motion.div>
                 ) : (
                     <div className="w-full h-full bg-linear-to-br from-slate-800 to-slate-900"/>
                 )}
@@ -90,9 +98,9 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                         className="flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-end"
                     >
                         <div
-                            className="h-16 w-16 md:h-24 md:w-24 rounded-2xl md:rounded-3xl border-4 border-white/10 bg-white shadow-2xl overflow-hidden flex-shrink-0 backdrop-blur-sm">
+                            className="h-16 w-16 md:h-24 md:w-24 rounded-2xl md:rounded-3xl border-4 border-white/10 bg-white shadow-2xl overflow-hidden shrink-0 backdrop-blur-sm relative">
                             {store.logoUrl ? (
-                                <img src={store.logoUrl} className="w-full h-full object-cover" alt="Logo"/>
+                                <Image src={store.logoUrl} fill sizes="96px" className="object-cover" alt="Logo"/>
                             ) : (
                                 <div
                                     className="w-full h-full flex items-center justify-center text-2xl md:text-4xl font-bold text-slate-300 bg-slate-100">
@@ -111,7 +119,7 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                                 {store.address && (
                                     <div
                                         className="flex items-center gap-1.5 text-[10px] md:text-xs font-medium text-slate-200 bg-white/10 px-2 py-1 md:px-3 md:py-1.5 rounded-full backdrop-blur-md border border-white/10 hover:bg-white/20 transition-colors cursor-pointer"
-                                        onClick={() => window.open(`http://googleusercontent.com/maps.google.com/search/${encodeURIComponent(store.address!)}`, '_blank')}>
+                                        onClick={() => window.open(`https://maps.google.com/search?q=${encodeURIComponent(store.address!)}`, '_blank')}>
                                         <MapPin className="h-3 w-3"/> <span
                                         className="truncate max-w-50">{store.address}</span>
                                     </div>
@@ -199,17 +207,25 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                                         onClick={() => setSelectedItem(item)}
                                         className="group relative bg-white p-2.5 md:p-3 rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-indigo-100 transition-all cursor-pointer flex gap-3 md:gap-4 overflow-hidden"
                                     >
+                                        {item.isAvailable === false && (
+                                            <div
+                                                className="absolute inset-0 z-10 rounded-2xl bg-slate-100/70 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                                                <span
+                                                    className="text-[10px] font-bold uppercase tracking-wide bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full shadow-sm">
+                                                    Indisponible
+                                                </span>
+                                            </div>
+                                        )}
                                         <div
-                                            className="h-20 w-20 md:h-24 md:w-24 shrink-0 rounded-xl overflow-hidden bg-slate-50 relative border border-slate-100">
-                                            {item.imageUrl ? (
-                                                <img src={item.imageUrl} alt={item.name}
-                                                     className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"/>
-                                            ) : (
-                                                <div
-                                                    className="h-full w-full flex items-center justify-center bg-slate-50">
-                                                    <ImageIcon className="h-6 w-6 md:h-8 md:w-8 text-slate-300/50"/>
-                                                </div>
-                                            )}
+                                            className="h-20 w-20 md:h-24 md:w-24 shrink-0 rounded-xl overflow-hidden bg-slate-50 relative border border-slate-100">{item.imageUrl ? (
+                                            <Image src={item.imageUrl} alt={item.name} fill sizes="96px"
+                                                   className="object-cover group-hover:scale-110 transition-transform duration-500"/>
+                                        ) : (
+                                            <div
+                                                className="h-full w-full flex items-center justify-center bg-slate-50">
+                                                <ImageIcon className="h-6 w-6 md:h-8 md:w-8 text-slate-300/50"/>
+                                            </div>
+                                        )}
                                         </div>
 
                                         <div className="flex-1 flex flex-col justify-between py-0.5">
@@ -231,15 +247,31 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                                                     {item.duration && (
                                                         <span
                                                             className="text-[10px] text-slate-400 flex items-center gap-1 mb-0.5">
-                                                            <Clock className="h-3 w-3"/> {item.duration}
-                                                        </span>
+                <Clock className="h-3 w-3"/> {item.duration} min
+            </span>
                                                     )}
-                                                    <div className="flex items-baseline gap-1">
-                                                        {item.isStartingPrice && <span
-                                                            className="text-[10px] text-slate-400 font-medium uppercase">Dès</span>}
-                                                        <span
-                                                            className="text-base font-bold text-slate-900">{item.price}€</span>
-                                                    </div>
+                                                    {item.isOnPromotion && item.discountPercentage ? (
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span
+                                                                    className="text-xs text-slate-400 line-through">{item.price}€</span>
+                                                                <span
+                                                                    className="text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-full">
+                        -{item.discountPercentage}%
+                    </span>
+                                                            </div>
+                                                            <span className="text-base font-bold text-orange-600">
+                    {(item.price * (1 - item.discountPercentage / 100)).toFixed(2)}€
+                </span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-baseline gap-1">
+                                                            {item.isStartingPrice && <span
+                                                                className="text-[10px] text-slate-400 font-medium uppercase">Dès</span>}
+                                                            <span
+                                                                className="text-base font-bold text-slate-900">{item.price}€</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div
                                                     className="h-7 w-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[var(--primary)] group-hover:text-white transition-all">
@@ -278,8 +310,8 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
 
                             <div className="relative h-64 w-full bg-slate-50">
                                 {selectedItem.imageUrl ? (
-                                    <img src={selectedItem.imageUrl} alt={selectedItem.name}
-                                         className="h-full w-full object-cover"/>
+                                    <Image src={selectedItem.imageUrl} alt={selectedItem.name} fill sizes="448px"
+                                           className="object-cover"/>
                                 ) : (
                                     <div className="h-full w-full flex items-center justify-center">
                                         <ImageIcon className="h-16 w-16 text-slate-200"/>
@@ -299,20 +331,46 @@ export function PublicStoreView({store, categories, items, isPro}: PublicViewPro
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
                                         <h3 className="text-2xl font-bold font-heading text-slate-900 mb-1">{selectedItem.name}</h3>
-                                        {selectedItem.duration && (
-                                            <Badge variant="secondary"
-                                                   className="font-normal text-xs bg-slate-100 text-slate-500 hover:bg-slate-100">
-                                                Durée : {selectedItem.duration}
-                                            </Badge>
-                                        )}
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {selectedItem.duration && (
+                                                <Badge variant="secondary"
+                                                       className="font-normal text-xs bg-slate-100 text-slate-500 hover:bg-slate-100">
+                                                    Durée : {selectedItem.duration} min
+                                                </Badge>
+                                            )}
+                                            {selectedItem.isAvailable === false && (
+                                                <Badge
+                                                    className="text-xs bg-slate-200 text-slate-500 border-none hover:bg-slate-200">
+                                                    Indisponible
+                                                </Badge>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="text-right">
-                                        {selectedItem.isStartingPrice &&
-                                            <div className="text-xs text-slate-400 uppercase font-bold">À partir
-                                                de</div>}
-                                        <div
-                                            className="text-2xl font-bold text-[var(--primary)]">{selectedItem.price}€
-                                        </div>
+                                        {selectedItem.isOnPromotion && selectedItem.discountPercentage ? (
+                                            <div className="flex flex-col items-end gap-0.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span
+                                                        className="text-sm text-slate-400 line-through">{selectedItem.price}€</span>
+                                                    <span
+                                                        className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">
+                    -{selectedItem.discountPercentage}%
+                </span>
+                                                </div>
+                                                <div className="text-2xl font-bold text-orange-600">
+                                                    {(selectedItem.price * (1 - selectedItem.discountPercentage / 100)).toFixed(2)}€
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {selectedItem.isStartingPrice &&
+                                                    <div className="text-xs text-slate-400 uppercase font-bold">à partir
+                                                        de</div>}
+                                                <div
+                                                    className="text-2xl font-bold text-[var(--primary)]">{selectedItem.price}€
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 

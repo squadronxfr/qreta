@@ -22,14 +22,14 @@ export default function StoreDashboardPage({params}: PageProps) {
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center p-10 font-medium text-slate-500">
-                <Spinner className="h-8 w-8 text-indigo-600 mb-2" />
-                Chargement de la boutique...
+                <Spinner className="h-8 w-8 text-indigo-600 mb-2"/>
+                Chargement du catalogue ...
             </div>
         );
     }
 
     if (!store) {
-        return <div className="p-10 text-center">Boutique introuvable.</div>;
+        return <div className="p-10 text-center">Catalogue introuvable.</div>;
     }
 
     return (

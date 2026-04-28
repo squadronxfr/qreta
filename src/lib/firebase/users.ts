@@ -83,25 +83,6 @@ export const updateUserSubscriptionAdmin = async (
     });
 };
 
-export const toggleUserBlock = async (
-    userId: string,
-    isCurrentlyBlocked: boolean
-): Promise<void> => {
-    await updateDoc(doc(db, "users", userId), {
-        isBlocked: !isCurrentlyBlocked,
-        updatedAt: Timestamp.now(),
-    });
-};
-
-/**
- * Supprime complètement un utilisateur et toutes ses données :
- * 1. Ses boutiques (stores)
- * 2. Les catégories de ses boutiques (categories)
- * 3. Les items de ses boutiques (items) + images Storage
- * 4. Son avatar (Storage)
- * 5. Son document utilisateur (users/{uid})
- * 6. Son compte d'authentification (Auth)
- */
 export const deleteAccount = async (user: User) => {
     const storesQuery = query(collection(db, "stores"), where("userId", "==", user.uid));
     const storesSnapshot = await getDocs(storesQuery);

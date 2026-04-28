@@ -2,14 +2,11 @@ import {createStore} from "zustand";
 import {
     onAuthStateChanged,
     signOut,
-    GoogleAuthProvider,
-    signInWithPopup,
     User,
     updateProfile as firebaseUpdateProfile,
     updatePassword as firebaseUpdatePassword,
     EmailAuthProvider,
     reauthenticateWithCredential,
-
 } from "firebase/auth";
 import {doc, onSnapshot, Unsubscribe, updateDoc, setDoc, Timestamp} from "firebase/firestore";
 import {ref, uploadBytes, getDownloadURL} from "firebase/storage";
@@ -25,7 +22,6 @@ export interface AuthState {
 
 export interface AuthActions {
     initialize: () => () => void;
-    googleSignIn: () => Promise<void>;
     logout: () => Promise<void>;
     updateUserProfile: (data: {
         firstname: string;
@@ -86,11 +82,6 @@ export const createAuthStore = () => {
                 };
             },
 
-            googleSignIn: async () => {
-                const provider = new GoogleAuthProvider();
-                await signInWithPopup(auth, provider);
-            },
-
             logout: async () => {
                 await signOut(auth);
                 set({user: null, userData: null});
@@ -100,30 +91,32 @@ export const createAuthStore = () => {
                 const {user, userData} = get();
                 if (!user) throw new Error("Not authenticated");
 
-                let newPhotoURL = user.photoURL;
+                let newPhotoURL: string | null = user.photoURL ?? null;
 
                 if (avatarFile) {
                     const storageRef = ref(storage, `users/${user.uid}/avatar_${Date.now()}`);
                     const snap = await uploadBytes(storageRef, avatarFile);
                     newPhotoURL = await getDownloadURL(snap.ref);
-                } else if (removeAvatar && user.photoURL) {
-                    newPhotoURL = "";
+                } else if (removeAvatar) {
+                    newPhotoURL = null;
                 }
 
                 const newDisplayName = `${firstname} ${lastname}`.trim();
 
-                if (newDisplayName !== user.displayName || newPhotoURL !== user.photoURL) {
+                if (newDisplayName !== user.displayName || newPhotoURL !== (user.photoURL ?? null)) {
                     await firebaseUpdateProfile(user, {
                         displayName: newDisplayName,
-                        photoURL: newPhotoURL || "",
+                        photoURL: newPhotoURL ?? "",
                     });
+
+                    set({user: auth.currentUser});
 
                     const userRef = doc(db, "users", user.uid);
 
                     const updatePayload = {
                         firstname,
                         lastname,
-                        photoUrl: newPhotoURL || "",
+                        photoUrl: newPhotoURL,
                         email: user.email || "",
                         updatedAt: Timestamp.now(),
                     };

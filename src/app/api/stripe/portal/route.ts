@@ -2,7 +2,7 @@ import {NextResponse} from "next/server";
 import Stripe from "stripe";
 import {stripe} from "@/lib/stripe";
 import {adminDb} from "@/lib/firebase/admin";
-import {verifyAuthToken} from "@/lib/firebase/auth-api";
+import {verifyAuthToken, AuthError} from "@/lib/firebase/auth-api";
 import {SUBSCRIPTION_PLANS} from "@/config/subscription";
 import {sanitizeReturnUrl} from "@/lib/utils";
 
@@ -13,12 +13,17 @@ type PortalBody = {
     action?: "cancel";
 };
 
+type UserData = {
+    subscription?: {
+        stripeSubscriptionId?: string;
+    };
+};
+
 function getAppOrigin(req: Request): string {
     const env = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL;
     if (env) return new URL(env).origin;
     return new URL(req.url).origin;
 }
-
 
 function allowedPriceIds(): string[] {
     return Object.values(SUBSCRIPTION_PLANS)
@@ -35,14 +40,13 @@ async function resolveSubscriptionId(customerId: string, userData: unknown): Pro
         typeof userData === "object" &&
         userData !== null &&
         "subscription" in userData &&
-        typeof (userData as any).subscription?.stripeSubscriptionId === "string"
-            ? ((userData as any).subscription.stripeSubscriptionId as string)
+        typeof (userData as UserData).subscription?.stripeSubscriptionId === "string"
+            ? (userData as UserData).subscription!.stripeSubscriptionId!
             : null;
 
     if (subId) return subId;
 
     const subs = await stripe.subscriptions.list({customer: customerId, status: "all", limit: 10});
-
     const preferred = subs.data.find((s) => ["active", "trialing", "past_due"].includes(s.status));
     return (preferred ?? subs.data[0])?.id ?? null;
 }
@@ -80,11 +84,9 @@ export async function POST(req: Request) {
             return_url: safeReturn.toString(),
         };
 
-        // 1) Flow annulation (deep link)
         if (action === "cancel") {
             const subscriptionId = await resolveSubscriptionId(customerId, userData);
             if (!subscriptionId) {
-                // fallback : ouvre juste le portal
                 const session = await stripe.billingPortal.sessions.create(portalParams);
                 return NextResponse.json({url: session.url});
             }
@@ -105,18 +107,15 @@ export async function POST(req: Request) {
             return NextResponse.json({url: session.url});
         }
 
-        // 2) Flow changement de plan (confirm)
         if (priceId) {
             const subscriptionId = await resolveSubscriptionId(customerId, userData);
             if (subscriptionId) {
                 const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
-                // Guard : si l’abonnement n’a pas exactement 1 item, on ne force pas update_confirm
                 if (subscription.items.data.length === 1) {
                     const item = subscription.items.data[0];
                     const currentPriceId = item.price?.id;
 
-                    // Si même price => PAS de flow confirm (évite exactement ton erreur)
                     if (currentPriceId && currentPriceId === priceId) {
                         const session = await stripe.billingPortal.sessions.create(portalParams);
                         return NextResponse.json({url: session.url});
@@ -133,21 +132,16 @@ export async function POST(req: Request) {
             }
         }
 
-        // 3) Portal normal
         const session = await stripe.billingPortal.sessions.create(portalParams);
         return NextResponse.json({url: session.url});
     } catch (error: unknown) {
-        if (error instanceof Error && error.message.includes("Authorization")) {
+        if (error instanceof AuthError) {
             return NextResponse.json({error: "Unauthorized"}, {status: 401});
         }
-
-        console.error("[STRIPE_PORTAL]", error);
-
-        const maybeStripe = error as { type?: unknown; message?: unknown };
-        if (maybeStripe?.type === "StripeInvalidRequestError") {
-            return NextResponse.json({error: typeof maybeStripe.message === "string" ? maybeStripe.message : "Bad request"}, {status: 400});
+        if (error instanceof Stripe.errors.StripeError) {
+            return NextResponse.json({error: error.message}, {status: 400});
         }
-
+        console.error("[STRIPE_PORTAL]", error);
         return NextResponse.json({error: "Internal Error"}, {status: 500});
     }
 }

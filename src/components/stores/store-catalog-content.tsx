@@ -95,7 +95,7 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                                 </div>
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Toutes</SelectItem>
+                                <SelectItem value="all">Catégories</SelectItem>
                                 {categories.map((cat) => (
                                     <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                                 ))}
@@ -120,31 +120,31 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                        <AddCategoryDialog storeId={storeId}/>
-                        <div className="w-full sm:w-auto [&_button]:w-full">
-                            {hasCategories ? (
-                                <AddItemDialog storeId={storeId} categories={categories}/>
-                            ) : (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                aria-disabled="true"
-                                                onClick={handleUnavailableAdd}
-                                                className="bg-slate-300 text-slate-600 rounded-lg cursor-not-allowed hover:bg-slate-300 opacity-80"
-                                            >
-                                                Ajouter un élément
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Ajoutez d&#39;abord une catégorie pour créer un élément.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                        </div>
+                    <AddCategoryDialog storeId={storeId}/>
+                    <div className="w-full sm:w-auto [&_button]:w-full">
+                        {hasCategories ? (
+                            <AddItemDialog storeId={storeId} categories={categories}/>
+                        ) : (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            aria-disabled="true"
+                                            onClick={handleUnavailableAdd}
+                                            className="bg-slate-300 text-slate-600 rounded-lg cursor-not-allowed hover:bg-slate-300 opacity-80"
+                                        >
+                                            Ajouter un élément
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Ajoutez d&#39;abord une catégorie pour créer un élément.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -193,9 +193,7 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                                             {items.filter((i) => i.categoryId === cat.id).length}
                                         </span>
                                     </div>
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <CategoryActions category={cat}/>
-                                    </div>
+                                    <CategoryActions category={cat}/>
                                 </div>
 
                                 {categoryItems.length === 0 ? (
@@ -211,7 +209,8 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                                                 onClick={() => setEditingItemId(item.id)}
                                                 className={cn(
                                                     "group relative flex gap-4 p-3 bg-white border border-slate-200 rounded-2xl transition-all cursor-pointer hover:shadow-md hover:border-indigo-200",
-                                                    !item.isActive && "opacity-75 bg-slate-50"
+                                                    !item.isActive && "bg-slate-50",
+                                                    item.isActive && item.isAvailable === false && "bg-amber-50/30 border-amber-100"
                                                 )}
                                             >
                                                 <div
@@ -229,15 +228,6 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                                                             className="h-full w-full flex items-center justify-center text-slate-300">
                                                             <ImageIcon
                                                                 className="h-6 w-6 md:h-8 md:w-8 text-slate-300/50"/>
-                                                        </div>
-                                                    )}
-                                                    {!item.isActive && (
-                                                        <div
-                                                            className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
-                                                            <Badge variant="secondary"
-                                                                   className="text-[10px] bg-slate-200/90">
-                                                                Masqué
-                                                            </Badge>
                                                         </div>
                                                     )}
                                                 </div>
@@ -270,6 +260,24 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                {(!item.isActive || item.isAvailable === false) && (
+                                                    <div className={cn(
+                                                        "absolute inset-0 rounded-2xl flex items-center justify-center pointer-events-none",
+                                                        !item.isActive
+                                                            ? "bg-slate-100/80 backdrop-blur-[1px]"
+                                                            : "bg-slate-50/70 backdrop-blur-[1px]"
+                                                    )}>
+                                                        <Badge className={cn(
+                                                            "text-[10px] border-none shadow-sm",
+                                                            !item.isActive
+                                                                ? "bg-slate-200 text-slate-500"
+                                                                : "bg-slate-200 text-slate-800"
+                                                        )}>
+                                                            {!item.isActive ? "Masqué" : "Indisponible"}
+                                                        </Badge>
+                                                    </div>
+                                                )}
 
                                                 <div
                                                     className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100">

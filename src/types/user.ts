@@ -1,6 +1,6 @@
 import {Timestamp} from "firebase/firestore";
 
-export type SubscriptionPlan = "free" | "starter" | "pro";
+export type SubscriptionPlan = "free" | "pro";
 export type SubscriptionStatus = "active" | "past_due" | "canceled" | "trialing" | "incomplete" | "unpaid" | "paused";
 
 export interface UserSubscription {
@@ -11,6 +11,7 @@ export interface UserSubscription {
     stripeSubscriptionId?: string;
     stripePriceId?: string;
     cancelAtPeriodEnd?: boolean;
+    cancelAt?: Timestamp | null;
 }
 
 export interface UserDoc {

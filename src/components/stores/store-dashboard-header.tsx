@@ -20,7 +20,7 @@ export function StoreDashboardHeader({store}: StoreDashboardHeaderProps) {
                     className="flex items-center gap-1 hover:text-indigo-600 transition-colors font-medium"
                 >
                     <ChevronLeft className="h-4 w-4"/>
-                    Mes Boutiques
+                    Mes Catalogues
                 </Link>
                 <span className="text-slate-300">/</span>
                 <span className="font-semibold text-slate-900">{store.name}</span>
@@ -30,12 +30,12 @@ export function StoreDashboardHeader({store}: StoreDashboardHeaderProps) {
                 className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 bg-white p-6 rounded-3xl border shadow-sm">
                 <div className="flex items-center gap-5">
                     <div
-                        className="h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0 overflow-hidden relative border-4 border-white">
+                        className="h-20 w-20 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0 overflow-hidden relative border-4 border-white">
                         {store.logoUrl ? (
                             <Image
                                 src={store.logoUrl}
                                 alt={store.name}
-                                fill
+                                fill sizes="96px"
                                 className="object-cover"
                             />
                         ) : (

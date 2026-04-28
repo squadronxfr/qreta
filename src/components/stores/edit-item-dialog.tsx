@@ -31,9 +31,11 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {ImageIcon, X, Lock} from "lucide-react";
+import {Badge} from "@/components/ui/badge";
+import {ImageIcon, X, Lock, Tag, EyeOff, PackageX} from "lucide-react";
 import {Spinner} from "@/components/ui/spinner";
 import {toast} from "sonner";
+import Image from "next/image";
 
 interface EditItemDialogProps {
     item: Item;
@@ -60,6 +62,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
 
     const userPlanKey = (userData?.subscription?.plan as PlanKey) || "free";
     const canManageAvailability = userPlanKey !== "free";
+    const canManagePromotion = userPlanKey !== "free";
 
     const initialDuration = parseDurationValue(item.duration);
 
@@ -72,7 +75,10 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
         isStartingPrice: item.isStartingPrice,
         hasDuration: item.type === "service" && initialDuration !== null,
         duration: initialDuration,
-        isActive: item.isActive ?? true
+        isActive: item.isActive ?? true,
+        isAvailable: item.isAvailable ?? true,
+        isOnPromotion: item.isOnPromotion ?? false,
+        discountPercentage: item.discountPercentage ?? 10,
     });
 
     useEffect(() => {
@@ -87,7 +93,10 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                 isStartingPrice: item.isStartingPrice,
                 hasDuration: item.type === "service" && nextDuration !== null,
                 duration: nextDuration,
-                isActive: item.isActive ?? true
+                isActive: item.isActive ?? true,
+                isAvailable: item.isAvailable ?? true,
+                isOnPromotion: item.isOnPromotion ?? false,
+                discountPercentage: item.discountPercentage ?? 10,
             });
             setPreviewUrl(item.imageUrl || null);
             setImageFile(null);
@@ -112,6 +121,11 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
+    const discountedPrice = (() => {
+        const base = parseFloat(formData.price);
+        if (!formData.isOnPromotion || !formData.discountPercentage || isNaN(base)) return null;
+        return (base * (1 - formData.discountPercentage / 100)).toFixed(2);
+    })();
 
     const handleSubmit = async (e: React.SyntheticEvent) => {
         e.preventDefault();
@@ -135,7 +149,10 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                     type: formData.type,
                     isStartingPrice: formData.isStartingPrice,
                     duration: formData.type === "service" && formData.hasDuration ? formData.duration : null,
-                    isActive: formData.isActive,
+                    isActive: canManageAvailability ? formData.isActive : (item.isActive ?? true),
+                    isAvailable: canManageAvailability ? formData.isAvailable : (item.isAvailable ?? true),
+                    isOnPromotion: canManagePromotion ? formData.isOnPromotion : (item.isOnPromotion ?? false),
+                    discountPercentage: canManagePromotion ? formData.discountPercentage : (item.discountPercentage ?? 0),
                     imageUrl: item.imageUrl,
                 },
                 imageFile,
@@ -222,7 +239,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                                 })}
                             />
                             <label htmlFor="edit-starting" className="text-xs font-medium cursor-pointer">
-                                Prix &#34;À partir de&#34;
+                                Prix &ldquo;à partir de&rdquo;
                             </label>
                         </div>
                     </div>
@@ -247,7 +264,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
 
                             {formData.hasDuration && (
                                 <div className="space-y-2">
-                                    <Label htmlFor="edit-duration">Dur&eacute;e en minutes</Label>
+                                    <Label htmlFor="edit-duration">Durée en minutes</Label>
                                     <Input
                                         id="edit-duration"
                                         type="number"
@@ -269,37 +286,119 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                     )}
 
                     <div
-                        className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
-                        <div className="space-y-0.5">
+                        className={`p-4 rounded-xl border transition-colors ${formData.isOnPromotion && canManagePromotion ? "bg-orange-50 border-orange-200" : "bg-slate-50 border-slate-100"}`}>
+                        <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-2">
-                                <Label className="text-base font-medium">En stock / Disponible</Label>
+                                <Label className="text-base font-medium flex items-center gap-1.5">
+                                    <Tag className="h-4 w-4 text-orange-500"/> Promotion
+                                </Label>
+                                {!canManagePromotion && <Lock className="h-3 w-3 text-slate-400"/>}
+                            </div>
+                            {canManagePromotion ? (
+                                <Switch
+                                    checked={formData.isOnPromotion}
+                                    onCheckedChange={(checked) => setFormData({...formData, isOnPromotion: checked})}
+                                />
+                            ) : (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div onClick={(e) => e.preventDefault()}>
+                                                <Switch checked={false} disabled className="opacity-50"/>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Fonctionnalité réservée au plan Pro</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                        </div>
+                        <p className="text-xs text-slate-500 mb-3">
+                            Affichez un prix barré et une remise sur la carte produit.
+                        </p>
+                        {!canManagePromotion && (
+                            <div
+                                className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
+                                <Lock className="h-3.5 w-3.5 text-indigo-400 shrink-0"/>
+                                <p className="text-xs text-indigo-600 font-medium">Fonctionnalité Pro</p>
+                            </div>
+                        )}
+                        {canManagePromotion && formData.isOnPromotion && (
+                            <div className="space-y-3 pt-1">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="edit-discount" className="text-sm">Remise (%)</Label>
+                                    <div className="flex items-center gap-3">
+                                        <Input
+                                            id="edit-discount"
+                                            type="number"
+                                            min={1}
+                                            max={99}
+                                            value={formData.discountPercentage}
+                                            onChange={(e) => {
+                                                const parsed = parseInt(e.target.value, 10);
+                                                setFormData({
+                                                    ...formData,
+                                                    discountPercentage: Number.isFinite(parsed) ? Math.min(99, Math.max(1, parsed)) : 10,
+                                                });
+                                            }}
+                                            className="rounded-xl w-24 bg-white"
+                                        />
+                                        <Badge className="bg-orange-100 text-orange-700 border-none text-sm px-3">
+                                            -{formData.discountPercentage}%
+                                        </Badge>
+                                    </div>
+                                </div>
+                                {discountedPrice && (
+                                    <div className="flex items-center gap-3 pt-1">
+                                        <span
+                                            className="text-sm text-slate-400 line-through">{parseFloat(formData.price).toFixed(2)} €</span>
+                                        <span className="text-base font-bold text-orange-600">{discountedPrice} €</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+
+                    <div
+                        className={`p-4 rounded-xl border transition-colors ${!formData.isAvailable && canManageAvailability ? "bg-slate-100 border-slate-300" : "bg-slate-50 border-slate-100"}`}>
+                        <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                                <Label className="text-base font-medium flex items-center gap-1.5">
+                                    <PackageX className="h-4 w-4 text-slate-400"/> Disponible
+                                </Label>
                                 {!canManageAvailability && <Lock className="h-3 w-3 text-slate-400"/>}
                             </div>
-                            <p className="text-xs text-slate-500">
-                                {canManageAvailability
-                                    ? "Masquer ce produit du catalogue sans le supprimer."
-                                    : "Passez au plan Starter pour gérer les ruptures de stock."}
-                            </p>
+                            {canManageAvailability ? (
+                                <Switch
+                                    checked={formData.isAvailable}
+                                    onCheckedChange={(checked) => setFormData({...formData, isAvailable: checked})}
+                                />
+                            ) : (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div onClick={(e) => e.preventDefault()}>
+                                                <Switch checked={true} disabled className="opacity-50"/>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Fonctionnalité réservée au plan Pro</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
                         </div>
-
-                        {canManageAvailability ? (
-                            <Switch
-                                checked={formData.isActive}
-                                onCheckedChange={(checked) => setFormData({...formData, isActive: checked})}
-                            />
-                        ) : (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div onClick={(e) => e.preventDefault()}>
-                                            <Switch checked={true} disabled className="opacity-50"/>
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Fonctionnalité réservée aux membres Starter & Pro</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                        <p className="text-xs text-slate-500">
+                            Si désactivé, l&apos;article apparaît grisé avec la mention &quot;Indisponible&quot;.
+                        </p>
+                        {!canManageAvailability && (
+                            <div
+                                className="mt-3 flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
+                                <Lock className="h-3.5 w-3.5 text-indigo-400 shrink-0"/>
+                                <p className="text-xs text-indigo-600 font-medium">Fonctionnalité Pro</p>
+                            </div>
                         )}
                     </div>
 
@@ -307,7 +406,8 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                         <Label>Image</Label>
                         {previewUrl ? (
                             <div className="relative w-full h-48 rounded-2xl overflow-hidden border bg-slate-50 group">
-                                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover"/>
+                                <Image src={previewUrl} alt="Preview" fill sizes="(max-width: 768px) 100vw, 448px"
+                                       className="object-cover"/>
                                 <Button
                                     type="button"
                                     variant="destructive"
@@ -341,6 +441,50 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                         <Textarea id="edit-desc" value={formData.description}
                                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                                   className="rounded-xl"/>
+                    </div>
+                    <div
+                        className={`p-4 rounded-xl border transition-colors ${!formData.isActive && canManageAvailability ? "bg-slate-100 border-slate-300" : "bg-slate-50 border-slate-100"}`}>
+                        <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                                <Label className="text-base font-medium flex items-center gap-1.5">
+                                    <EyeOff className="h-4 w-4 text-slate-400"/> Visible dans le catalogue
+                                </Label>
+                                {!canManageAvailability && <Lock className="h-3 w-3 text-slate-400"/>}
+                            </div>
+                            {canManageAvailability ? (
+                                <Switch
+                                    checked={formData.isActive}
+                                    onCheckedChange={(checked) => setFormData({
+                                        ...formData,
+                                        isActive: checked,
+                                        isAvailable: checked
+                                    })}
+                                />
+                            ) : (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div onClick={(e) => e.preventDefault()}>
+                                                <Switch checked={true} disabled className="opacity-50"/>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Fonctionnalité réservée au plan Pro</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                        </div>
+                        <p className="text-xs text-slate-500">
+                            Si désactivé, l&apos;article est masqué du catalogue sans être supprimé
+                        </p>
+                        {!canManageAvailability && (
+                            <div
+                                className="mt-3 flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
+                                <Lock className="h-3.5 w-3.5 text-indigo-400 shrink-0"/>
+                                <p className="text-xs text-indigo-600 font-medium">Fonctionnalité Pro</p>
+                            </div>
+                        )}
                     </div>
 
                     <Button type="submit" className="w-full bg-indigo-600 rounded-xl h-12 font-bold" disabled={loading}>

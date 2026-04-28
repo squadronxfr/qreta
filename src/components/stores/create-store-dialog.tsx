@@ -1,5 +1,5 @@
 "use client";
-import React, {useState} from "react";
+import {useState} from "react";
 import {useAuthStore} from "@/providers/auth-store-provider";
 import {createStoreAction} from "@/actions/store";
 import {Button} from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {useRouter} from "next/navigation";
 import {SUBSCRIPTION_PLANS, PlanKey} from "@/config/subscription";
 import Link from "next/link";
 import {toast} from "sonner";
+import type {FormEvent} from "react";
 
 interface CreateStoreDialogProps {
     storeCount: number;
@@ -41,7 +42,7 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
     const plan = SUBSCRIPTION_PLANS[planKey];
     const isQuotaReached = storeCount >= plan.quota;
 
-    const handleCreate = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    const handleCreate = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!user) return;
 
@@ -53,20 +54,17 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
         setLoading(true);
 
         try {
-            const result = await createStoreAction(user.uid, name, description);
+            const idToken = await user.getIdToken();
+            const result = await createStoreAction(idToken, name, description);
 
             if (result.success && result.storeId) {
-                toast.success("Catalogue créé !", {
-                    description: "Votre espace est prêt."
-                });
+                toast.success("Catalogue créé !", {description: "Votre espace est prêt."});
                 setOpen(false);
                 setName("");
                 setDescription("");
                 router.push(`/stores/${result.storeId}`);
             } else {
-                toast.error("Erreur", {
-                    description: result.error || "Une erreur est survenue."
-                });
+                toast.error("Erreur", {description: result.error || "Une erreur est survenue."});
             }
         } catch (err) {
             console.error(err);
@@ -81,7 +79,7 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                     <Button className="rounded-xl opacity-80" variant="outline">
-                        <Lock className="mr-2 h-4 w-4"/> Nouvelle Boutique
+                        <Lock className="h-4 w-4"/>Nouveau Catalogue
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-106.25 rounded-2xl">
@@ -93,21 +91,17 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
                             Limite atteinte
                         </DialogTitle>
                         <DialogDescription>
-                            Votre plan <strong>{plan.name}</strong> ne permet de gérer que {plan.quota} boutique(s).
+                            Votre plan <strong>{plan.name}</strong> ne permet de gérer que {plan.quota} catalogue(s).
                         </DialogDescription>
                     </DialogHeader>
-
                     <div className="py-4 text-center space-y-4">
                         <p className="text-sm text-slate-500">
-                            Passez au plan supérieur pour débloquer plus de boutiques et de fonctionnalités.
+                            Passez au plan supérieur pour débloquer plus de catalogues et de fonctionnalités.
                         </p>
                     </div>
-
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button variant="outline" className="rounded-xl">
-                                Annuler
-                            </Button>
+                            <Button variant="outline" className="rounded-xl">Annuler</Button>
                         </DialogClose>
                         <Button asChild className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white">
                             <Link href="/billing">Voir les offres</Link>
@@ -122,7 +116,7 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200">
-                    <Plus className="mr-2 h-4 w-4"/> Nouvelle Boutique
+                    <Plus className="h-4 w-4"/>Nouveau Catalogue
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-106.25 rounded-2xl">
@@ -132,13 +126,12 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
                             <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
                                 <StoreIcon className="h-5 w-5"/>
                             </div>
-                            Créer une boutique
+                            Créer un catalogue
                         </DialogTitle>
                         <DialogDescription>
                             Configurez les informations de base de votre nouvel établissement.
                         </DialogDescription>
                     </DialogHeader>
-
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                             <Label htmlFor="name">Nom de l&#39;établissement</Label>
@@ -162,7 +155,6 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
                             />
                         </div>
                     </div>
-
                     <DialogFooter>
                         <Button
                             type="submit"
@@ -170,7 +162,7 @@ export function CreateStoreDialog({storeCount}: CreateStoreDialogProps) {
                             className="rounded-xl w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white"
                         >
                             {loading && <Spinner className="mr-2 h-4 w-4"/>}
-                            Créer la boutique
+                            Créer mon catalogue
                         </Button>
                     </DialogFooter>
                 </form>
