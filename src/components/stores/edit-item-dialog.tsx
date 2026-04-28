@@ -239,7 +239,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                                 })}
                             />
                             <label htmlFor="edit-starting" className="text-xs font-medium cursor-pointer">
-                                Prix &#34;à partir de&#34;
+                                Prix &ldquo;à partir de&rdquo;
                             </label>
                         </div>
                     </div>
@@ -316,7 +316,6 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                         </div>
                         <p className="text-xs text-slate-500 mb-3">
                             Affichez un prix barré et une remise sur la carte produit.
-
                         </p>
                         {!canManagePromotion && (
                             <div
@@ -392,7 +391,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                             )}
                         </div>
                         <p className="text-xs text-slate-500">
-                            Si désactivé, l'article apparaît grisé avec la mention "Indisponible".
+                            Si désactivé, l&apos;article apparaît grisé avec la mention &quot;Indisponible&quot;.
                         </p>
                         {!canManageAvailability && (
                             <div
@@ -477,7 +476,7 @@ export function EditItemDialog({item, categories, open, onOpenChange}: EditItemD
                             )}
                         </div>
                         <p className="text-xs text-slate-500">
-                            Si désactivé, l'article est masqué du catalogue sans être supprimé
+                            Si désactivé, l&apos;article est masqué du catalogue sans être supprimé
                         </p>
                         {!canManageAvailability && (
                             <div

@@ -1,7 +1,7 @@
 import {NextResponse} from "next/server";
 import {adminDb} from "@/lib/firebase/admin";
 import {verifyAuthToken} from "@/lib/firebase/auth-api";
-import {Timestamp} from "firebase-admin/firestore";
+import {FieldValue} from "firebase-admin/firestore";
 import {SubscriptionPlan, SubscriptionStatus} from "@/types/user";
 
 export async function POST(req: Request) {
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         await adminDb.collection("users").doc(targetUserId).update({
             "subscription.plan": plan as SubscriptionPlan,
             "subscription.status": status as SubscriptionStatus,
-            updatedAt: Timestamp.now(),
+            updatedAt: FieldValue.serverTimestamp(),
         });
 
         return NextResponse.json({success: true});

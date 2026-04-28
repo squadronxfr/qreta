@@ -1,13 +1,11 @@
 import {NextResponse} from "next/server";
 import {stripe} from "@/lib/stripe";
 import {adminDb, adminAuth} from "@/lib/firebase/admin";
-import {verifyAuthToken} from "@/lib/firebase/auth-api";
+import {verifyAuthToken, AuthError} from "@/lib/firebase/auth-api";
 
 async function cancelStripeSubscription(userId: string): Promise<void> {
     const userDoc = await adminDb.collection("users").doc(userId).get();
-    const userData = userDoc.data();
-
-    const subscriptionId = userData?.subscription?.stripeSubscriptionId;
+    const subscriptionId = userDoc.data()?.subscription?.stripeSubscriptionId;
     if (!subscriptionId) return;
 
     const sub = await stripe.subscriptions.retrieve(subscriptionId);
@@ -16,14 +14,26 @@ async function cancelStripeSubscription(userId: string): Promise<void> {
     await stripe.subscriptions.cancel(subscriptionId);
 }
 
-async function deleteUserStores(userId: string): Promise<void> {
+async function deleteUserData(userId: string): Promise<void> {
     const storesSnap = await adminDb
         .collection("stores")
         .where("userId", "==", userId)
         .get();
 
-    const deletions = storesSnap.docs.map((d) => d.ref.delete());
-    await Promise.all(deletions);
+    const storeIds = storesSnap.docs.map((d) => d.id);
+
+    const subDeletions = storeIds.flatMap((storeId) => [
+        adminDb.collection("items").where("storeId", "==", storeId).get().then((snap) =>
+            Promise.all(snap.docs.map((d) => d.ref.delete()))
+        ),
+        adminDb.collection("categories").where("storeId", "==", storeId).get().then((snap) =>
+            Promise.all(snap.docs.map((d) => d.ref.delete()))
+        ),
+    ]);
+
+    await Promise.all(subDeletions);
+    await Promise.all(storesSnap.docs.map((d) => d.ref.delete()));
+    await adminDb.collection("users").doc(userId).delete();
 }
 
 export async function POST(req: Request) {
@@ -41,13 +51,12 @@ export async function POST(req: Request) {
         }
 
         await cancelStripeSubscription(targetUserId);
-        await deleteUserStores(targetUserId);
-        await adminDb.collection("users").doc(targetUserId).delete();
+        await deleteUserData(targetUserId);
         await adminAuth.deleteUser(targetUserId);
 
         return NextResponse.json({success: true});
     } catch (error: unknown) {
-        if (error instanceof Error && error.message.includes("Authorization")) {
+        if (error instanceof AuthError) {
             return NextResponse.json({error: "Unauthorized"}, {status: 401});
         }
         console.error("[ADMIN_DELETE_USER]", error);

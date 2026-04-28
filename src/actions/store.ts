@@ -4,7 +4,7 @@ import {adminDb} from "@/lib/firebase/admin";
 import {getAuth} from "firebase-admin/auth";
 import {SUBSCRIPTION_PLANS, PlanKey} from "@/config/subscription";
 import {generateSlug} from "@/lib/utils/slug";
-import {Timestamp} from "firebase-admin/firestore";
+import {FieldValue} from "firebase-admin/firestore";
 import {revalidatePath} from "next/cache";
 
 export type ActionResponse = {
@@ -13,7 +13,11 @@ export type ActionResponse = {
     error?: string;
 };
 
-export async function createStoreAction(idToken: string, name: string, description: string): Promise<ActionResponse> {
+export async function createStoreAction(
+    idToken: string,
+    name: string,
+    description: string
+): Promise<ActionResponse> {
     try {
         if (!idToken || !name) return {success: false, error: "Données incomplètes"};
 
@@ -33,20 +37,19 @@ export async function createStoreAction(idToken: string, name: string, descripti
         const plan = SUBSCRIPTION_PLANS[planKey];
 
         const storesQuery = await adminDb.collection("stores").where("userId", "==", userId).get();
-        const currentStoreCount = storesQuery.size;
-
-        if (currentStoreCount >= plan.quota) {
+        if (storesQuery.size >= plan.quota) {
             return {
                 success: false,
-                error: `Votre plan ${plan.name} est limité à ${plan.quota} catalogue(s).`
+                error: `Votre plan ${plan.name} est limité à ${plan.quota} catalogue(s).`,
             };
         }
 
         let slug = generateSlug(name);
         let isUnique = false;
         let counter = 0;
+        const MAX_SLUG_ATTEMPTS = 10;
 
-        while (!isUnique) {
+        while (!isUnique && counter <= MAX_SLUG_ATTEMPTS) {
             const checkSlug = counter === 0 ? slug : `${slug}-${counter}`;
             const slugQuery = await adminDb.collection("stores").where("slug", "==", checkSlug).get();
             if (slugQuery.empty) {
@@ -57,14 +60,16 @@ export async function createStoreAction(idToken: string, name: string, descripti
             }
         }
 
+        if (!isUnique) return {success: false, error: "Impossible de générer un slug unique."};
+
         const newStoreRef = await adminDb.collection("stores").add({
             name,
             description,
             slug,
             userId,
             isActive: false,
-            createdAt: Timestamp.now(),
-            updatedAt: Timestamp.now(),
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
             logoUrl: "",
             bannerUrl: "",
             phone: "",
@@ -77,9 +82,7 @@ export async function createStoreAction(idToken: string, name: string, descripti
         revalidatePath("/stores");
 
         return {success: true, storeId: newStoreRef.id};
-
-    } catch (error) {
-        console.error(error);
+    } catch {
         return {success: false, error: "Erreur serveur interne"};
     }
 }

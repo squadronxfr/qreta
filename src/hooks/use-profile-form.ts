@@ -18,6 +18,7 @@ export const useProfileForm = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [avatarRemoved, setAvatarRemoved] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -29,8 +30,13 @@ export const useProfileForm = () => {
             setFirstname(parts[0] || "");
             setLastname(parts.slice(1).join(" ") || "");
         }
-        setAvatarPreview(user?.photoURL || null);
     }, [userData, user]);
+
+    useEffect(() => {
+        if (!avatarFile && !avatarRemoved) {
+            setAvatarPreview(user?.photoURL || null);
+        }
+    }, [user?.photoURL, avatarFile, avatarRemoved]);
 
     const getInitials = () => {
         const f = firstname ? firstname[0].toUpperCase() : "";
@@ -43,11 +49,14 @@ export const useProfileForm = () => {
         if (!file) return;
         setAvatarFile(file);
         setAvatarPreview(URL.createObjectURL(file));
+        setAvatarRemoved(false);
     };
 
     const handleRemoveAvatar = () => {
         setAvatarFile(null);
         setAvatarPreview(null);
+        setAvatarRemoved(true);
+        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
     const handleSubmit = async (e: SyntheticEvent) => {
@@ -79,15 +88,16 @@ export const useProfileForm = () => {
                 firstname,
                 lastname,
                 avatarFile,
-                removeAvatar: avatarPreview === null && !!user.photoURL,
+                removeAvatar: avatarRemoved && !!user.photoURL,
             });
 
             setAvatarFile(null);
+            setAvatarRemoved(false);
             toast.success("Profil mis à jour avec succès.");
         } catch (err: unknown) {
             let message = "Une erreur est survenue.";
             if (err && typeof err === "object" && "code" in err) {
-                const code = (err as {code: string}).code;
+                const code = (err as { code: string }).code;
                 if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
                     message = "Le mot de passe actuel est incorrect.";
                 } else if (code === "auth/requires-recent-login") {

@@ -44,14 +44,19 @@ export default function ContactPage() {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [honeypot, setHoneypot] = useState("");
 
     const messageLength = message.length;
     const messageProgress = Math.min((messageLength / MIN_MESSAGE) * 100, 100);
 
-    // MODIFIÉ : redirige vers mailto au lieu de simuler un envoi
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
+
+        if (honeypot) {
+            setIsSuccess(true);
+            return;
+        }
 
         if (!subject) {
             setError("Veuillez sélectionner un sujet.");
@@ -228,6 +233,16 @@ export default function ContactPage() {
 
                                 <form onSubmit={handleSubmit} className="space-y-6">
                                     <div>
+                                        <input
+                                            type="text"
+                                            name="website"
+                                            value={honeypot}
+                                            onChange={(e) => setHoneypot(e.target.value)}
+                                            autoComplete="off"
+                                            tabIndex={-1}
+                                            aria-hidden="true"
+                                            className="hidden"
+                                        />
                                         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Vos
                                             coordonnées</p>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

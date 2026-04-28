@@ -65,7 +65,7 @@ export function DashboardHeader() {
                             <Button variant="ghost"
                                     className="relative h-10 w-10 rounded-full border border-slate-200 p-0 overflow-hidden cursor-pointer shadow-sm hover:bg-slate-50 transition-colors">
                                 <Avatar className="h-10 w-10 rounded-full cursor-pointer">
-                                    <AvatarImage src={userData?.photoUrl || user?.photoURL || ""}
+                                    <AvatarImage src={userData?.photoUrl || user?.photoURL || undefined}
                                                  className="object-cover"/>
                                     <AvatarFallback className="bg-indigo-50 text-indigo-600 font-bold cursor-pointer">
                                         {getInitials()}

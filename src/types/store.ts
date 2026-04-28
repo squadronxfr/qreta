@@ -44,3 +44,13 @@ export interface Item {
     isAvailable?: boolean;
     createdAt: Timestamp;
 }
+
+
+export type SerializedStore = Omit<Store, "createdAt" | "updatedAt"> & {
+    createdAt: { seconds: number; nanoseconds: number };
+    updatedAt: { seconds: number; nanoseconds: number };
+};
+
+export type SerializedItem = Omit<Item, "createdAt"> & {
+    createdAt: { seconds: number; nanoseconds: number };
+};

@@ -1,7 +1,7 @@
 import {NextResponse} from "next/server";
 import {adminDb} from "@/lib/firebase/admin";
 import {verifyAuthToken} from "@/lib/firebase/auth-api";
-import {Timestamp} from "firebase-admin/firestore";
+import {FieldValue} from "firebase-admin/firestore";
 
 export async function POST(req: Request) {
     try {
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
         await adminDb.collection("users").doc(targetUserId).update({
             isBlocked: !isCurrentlyBlocked,
-            updatedAt: Timestamp.now(),
+            updatedAt: FieldValue.serverTimestamp(),
         });
 
         return NextResponse.json({success: true});
