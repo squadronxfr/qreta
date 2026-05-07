@@ -13,13 +13,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Button} from "@/components/ui/button";
-import {LogOut, User, LayoutDashboard, CreditCard, ShieldCheck} from "lucide-react";
+import {LogOut, User, LayoutDashboard, CreditCard, ShieldCheck, Sun, MoonIcon} from "lucide-react";
+import {useState} from "react";
+import SwitchMode from "@/components/ui/switch-mode";
 
 export function DashboardHeader() {
     const user = useAuthStore((s) => s.user);
     const userData = useAuthStore((s) => s.userData);
     const router = useRouter();
     const logout = useAuthStore((s) => s.logout);
+    const [switchMode, useSwitchMode] = useState("light")
+
+    const handleSwitchMode = () => {
+        if (switchMode === "light") {
+            document.documentElement.classList.add("dark");
+            useSwitchMode("dark");
+        } else {
+            document.documentElement.classList.remove("dark");
+            useSwitchMode("light");
+        }
+    }
 
     const handleLogout = async () => {
         await logout();
@@ -111,6 +124,7 @@ export function DashboardHeader() {
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
+                    <SwitchMode/>
                 </div>
             </div>
         </header>
