@@ -62,6 +62,7 @@ export function DashboardHeader() {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    <SwitchMode/>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost"
@@ -113,7 +114,6 @@ export function DashboardHeader() {
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <SwitchMode/>
                 </div>
             </div>
         </header>
