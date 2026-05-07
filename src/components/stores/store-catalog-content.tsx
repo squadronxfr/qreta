@@ -280,7 +280,7 @@ export function StoreCatalogContent({storeId, categories, items}: StoreCatalogCo
                                                 )}
 
                                                 <div
-                                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100">
+                                                    className="absolute top-2 right-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all scale-100 md:scale-95 md:group-hover:scale-100">
                                                     <div
                                                         className="bg-white rounded-lg shadow-sm border border-slate-200 p-1">
                                                         <ItemActions item={item}
