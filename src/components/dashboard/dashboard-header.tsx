@@ -14,6 +14,8 @@ import {
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Button} from "@/components/ui/button";
 import {LogOut, User, LayoutDashboard, CreditCard, ShieldCheck} from "lucide-react";
+import {useState} from "react";
+import SwitchMode from "@/components/ui/switch-mode";
 
 export function DashboardHeader() {
     const user = useAuthStore((s) => s.user);
@@ -60,6 +62,7 @@ export function DashboardHeader() {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    <SwitchMode/>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost"

@@ -242,7 +242,7 @@ export default function SignupPage() {
                             gratuitement</p>
                         <div className="flex flex-col gap-2.5">
                             {[
-                                "1 Catalogue gratuite à vie",
+                                "1 Catalogue gratuit",
                                 "Produits illimités",
                                 "QR Code généré automatiquement",
                             ].map((feature) => (
